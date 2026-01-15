@@ -1,0 +1,50 @@
+.wrap {
+    padding: 34px 0;
+}
+
+.h1 {
+    font-size: 40px;
+    line-height: 1.1;
+    margin: 0 0 10px;
+    letter-spacing: -0.6px;
+}
+
+.p {
+    margin: 0 0 22px;
+    font-size: 18px;
+    opacity: 0.85;
+    max-width: 60ch;
+}
+
+.ctaRow {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.primary,
+.secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.primary {
+    background: #0b1220;
+    color: white;
+}
+
+.secondary {
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    color: #0b1220;
+}
+
+.primary:hover,
+.secondary:hover {
+    transform: translateY(-1px);
+}

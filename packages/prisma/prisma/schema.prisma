@@ -1,0 +1,222 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  GUEST
+  CAPTAIN
+  BOTH
+}
+
+enum BoatPricingType {
+  PRIVATE_HOURLY
+  PER_PERSON
+}
+
+enum TripStatus {
+  REQUESTED
+  ACCEPTED
+  ACTIVE
+  COMPLETED
+  CANCELED
+}
+
+enum PaymentStatus {
+  PENDING
+  HELD
+  PAID
+  REFUNDED
+  CANCELED
+}
+
+enum ReviewTargetType {
+  CAPTAIN
+  GUEST
+}
+
+enum IncidentType {
+  MECHANICAL
+  WEATHER
+  EMERGENCY
+  OTHER
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         UserRole @default(GUEST)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  captain       Captain?
+  tripsCreated  Trip[]            @relation("TripCreatedBy")
+  participants  TripParticipant[]
+  reviewsGiven  Review[]          @relation("ReviewAuthor")
+  refreshTokens RefreshToken[]
+}
+
+model RefreshToken {
+  id          String   @id @default(cuid())
+  userId      String
+  tokenHash   String   @unique
+  revokedAt   DateTime?
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  replacedBy  String?  // token id that replaced this one (rotation)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Captain {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  displayName String
+  bio       String?
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  boats Boat[]
+}
+
+model Boat {
+  id            String   @id @default(cuid())
+  captainId     String
+  name          String
+  maxPassengers Int
+  minimumHours  Int
+  licenseRef    String? // file reference only
+  insuranceRef  String? // file reference only
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  captain  Captain      @relation(fields: [captainId], references: [id], onDelete: Cascade)
+  pricings BoatPricing[]
+  trips    Trip[]
+
+  @@index([captainId])
+}
+
+model BoatPricing {
+  id           String          @id @default(cuid())
+  boatId       String
+  type         BoatPricingType
+  currency     String          @default("USD")
+
+  // PRIVATE_HOURLY
+  privateHourlyRateCents Int?
+
+  // PER_PERSON
+  perPersonRateCents Int?
+
+  minimumTripDurationHours Int
+  activeFrom DateTime @default(now())
+  activeTo   DateTime?
+  createdAt  DateTime @default(now())
+
+  boat Boat @relation(fields: [boatId], references: [id], onDelete: Cascade)
+
+  @@index([boatId])
+  @@index([activeFrom])
+}
+
+model Trip {
+  id          String     @id @default(cuid())
+  boatId      String
+  createdById String
+  status      TripStatus @default(REQUESTED)
+
+  startAt   DateTime
+  endAt     DateTime
+  notes     String?
+
+  // Snapshot of pricing at booking time (immutable history)
+  pricingSnapshot Json
+
+  subtotalCents  Int
+  commissionRate Float // e.g. 0.18
+  commissionCents Int
+  totalCents     Int
+  currency       String @default("USD")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  boat       Boat             @relation(fields: [boatId], references: [id], onDelete: Restrict)
+  createdBy  User             @relation("TripCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  participants TripParticipant[]
+  payment    Payment?
+  incidents  Incident[]
+  reviews    Review[]
+
+  @@index([boatId])
+  @@index([createdById])
+  @@index([status])
+  @@index([startAt])
+}
+
+model TripParticipant {
+  id        String   @id @default(cuid())
+  tripId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tripId, userId])
+  @@index([userId])
+}
+
+model Payment {
+  id         String        @id @default(cuid())
+  tripId     String        @unique
+  status     PaymentStatus @default(PENDING)
+  amountCents Int
+  currency   String @default("USD")
+  provider   String @default("stub")
+  providerRef String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id           String           @id @default(cuid())
+  tripId       String
+  authorId     String
+  targetType   ReviewTargetType
+  rating       Int
+  comment      String?
+  createdAt    DateTime @default(now())
+
+  trip   Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  author User @relation("ReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([tripId])
+  @@index([authorId])
+}
+
+model Incident {
+  id        String       @id @default(cuid())
+  tripId    String
+  type      IncidentType
+  summary   String
+  createdAt DateTime @default(now())
+
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@index([tripId])
+}
+
