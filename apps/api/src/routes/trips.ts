@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync } from "fastify";
-import { BoatPricingType, PaymentStatus, TripStatus, prisma } from "@lanchas/prisma";
+import { BoatPricingType, IncidentType, PaymentStatus, ReviewTargetType, TripStatus, prisma } from "@lanchas/prisma";
 import { requireAuthed, requireCaptain } from "../auth/guards.js";
 
 type CreateTripBody = {
@@ -23,6 +23,27 @@ function durationHoursCeil(startAt: Date, endAt: Date): number {
 }
 
 export const tripsRoutes: FastifyPluginAsync = async (app) => {
+    app.get<{ Params: { id: string } }>("/trips/:id", async (req) => {
+        const payload = await requireAuthed(app, req);
+        const trip = await prisma.trip.findUnique({
+            where: { id: req.params.id },
+            include: {
+                boat: { include: { captain: { select: { id: true, userId: true, displayName: true } } } },
+                participants: { include: { user: { select: { id: true, email: true } } } },
+                payment: true,
+                incidents: { orderBy: { createdAt: "desc" } },
+                reviews: { orderBy: { createdAt: "desc" } }
+            }
+        });
+        if (!trip) throw app.httpErrors.notFound("Trip not found");
+
+        const isParticipant = trip.participants.some((p) => p.userId === payload.sub);
+        const isCaptainUser = trip.boat.captain.userId === payload.sub;
+        if (!isParticipant && !isCaptainUser) throw app.httpErrors.forbidden("Not your trip");
+
+        return { trip };
+    });
+
     // User creates a trip request (private or per-person)
     app.post<{ Body: CreateTripBody }>("/trips", async (req) => {
         const payload = await requireAuthed(app, req);
@@ -171,6 +192,93 @@ export const tripsRoutes: FastifyPluginAsync = async (app) => {
         });
         return { trip: updated };
     });
+
+    // Captain marks completed (enables reviews)
+    app.post<{ Params: { id: string } }>("/trips/:id/complete", async (req) => {
+        const { captain } = await requireCaptain(app, req);
+        const trip = await prisma.trip.findUnique({ where: { id: req.params.id }, select: { id: true, boatId: true } });
+        if (!trip) throw app.httpErrors.notFound("Trip not found");
+        const boat = await prisma.boat.findUnique({ where: { id: trip.boatId }, select: { captainId: true } });
+        if (!boat) throw app.httpErrors.notFound("Boat not found");
+        if (boat.captainId !== captain.id) throw app.httpErrors.forbidden("Not your trip");
+
+        const updated = await prisma.trip.update({
+            where: { id: trip.id },
+            data: { status: TripStatus.COMPLETED }
+        });
+        return { trip: updated };
+    });
+
+    // Incidents (participant or captain user)
+    app.post<{ Params: { id: string }; Body: { type?: string; summary?: string } }>("/trips/:id/incidents", async (req) => {
+        const payload = await requireAuthed(app, req);
+        const trip = await prisma.trip.findUnique({
+            where: { id: req.params.id },
+            include: { boat: { include: { captain: { select: { userId: true } } } }, participants: true }
+        });
+        if (!trip) throw app.httpErrors.notFound("Trip not found");
+        const isParticipant = trip.participants.some((p) => p.userId === payload.sub);
+        const isCaptainUser = trip.boat.captain.userId === payload.sub;
+        if (!isParticipant && !isCaptainUser) throw app.httpErrors.forbidden("Not your trip");
+
+        const type = req.body.type;
+        const summary = req.body.summary?.trim();
+        if (!summary) throw app.httpErrors.badRequest("summary is required");
+        if (!type || !(type in IncidentType)) throw app.httpErrors.badRequest("type is required");
+
+        const incident = await prisma.incident.create({
+            data: { tripId: trip.id, type: type as any, summary }
+        });
+        return { incident };
+    });
+
+    // Reviews (after completion)
+    app.post<{ Params: { id: string }; Body: { targetType?: string; rating?: number; comment?: string } }>(
+        "/trips/:id/reviews",
+        async (req) => {
+            const payload = await requireAuthed(app, req);
+            const trip = await prisma.trip.findUnique({
+                where: { id: req.params.id },
+                include: { boat: { include: { captain: { select: { userId: true } } } }, participants: true }
+            });
+            if (!trip) throw app.httpErrors.notFound("Trip not found");
+            if (trip.status !== TripStatus.COMPLETED) throw app.httpErrors.badRequest("Trip must be completed to review");
+
+            const isParticipant = trip.participants.some((p) => p.userId === payload.sub);
+            const isCaptainUser = trip.boat.captain.userId === payload.sub;
+            if (!isParticipant && !isCaptainUser) throw app.httpErrors.forbidden("Not your trip");
+
+            const targetType = req.body.targetType;
+            if (!targetType || !(targetType in ReviewTargetType)) throw app.httpErrors.badRequest("targetType is required");
+
+            const rating = Number(req.body.rating);
+            if (!Number.isFinite(rating) || rating < 1 || rating > 5) throw app.httpErrors.badRequest("rating must be 1-5");
+
+            if (targetType === ReviewTargetType.CAPTAIN && !isParticipant) {
+                throw app.httpErrors.forbidden("Only guests can review captains");
+            }
+            if (targetType === ReviewTargetType.GUEST && !isCaptainUser) {
+                throw app.httpErrors.forbidden("Only captains can review guests");
+            }
+
+            const existing = await prisma.review.findFirst({
+                where: { tripId: trip.id, authorId: payload.sub, targetType: targetType as any },
+                select: { id: true }
+            });
+            if (existing) throw app.httpErrors.conflict("Review already submitted");
+
+            const review = await prisma.review.create({
+                data: {
+                    tripId: trip.id,
+                    authorId: payload.sub,
+                    targetType: targetType as any,
+                    rating,
+                    comment: req.body.comment?.trim() || null
+                }
+            });
+            return { review };
+        }
+    );
 
     // Stub payment: mark trip paid (guest triggers after acceptance)
     app.post<{ Params: { id: string } }>("/trips/:id/pay", async (req) => {

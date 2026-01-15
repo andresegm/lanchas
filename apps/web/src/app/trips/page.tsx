@@ -40,7 +40,7 @@ export default async function TripsPage() {
 
             <div className={styles.list}>
                 {data.trips.map((t) => (
-                    <div key={t.id} className={styles.card}>
+                    <a key={t.id} className={styles.card} href={`/trips/${t.id}`}>
                         <div className={styles.titleRow}>
                             <div className={styles.title}>{t.boat.name}</div>
                             <span className={styles.badge}>{t.status}</span>
@@ -53,13 +53,13 @@ export default async function TripsPage() {
                         </div>
 
                         {t.status === "ACCEPTED" && !t.payment ? (
-                            <form method="POST" action={`/api/trips/${t.id}/pay`}>
+                            <form method="POST" action={`/api/trips/${t.id}/pay`} onClick={(e) => e.stopPropagation()}>
                                 <button className={styles.primary} type="submit">
                                     Pay (stub)
                                 </button>
                             </form>
                         ) : null}
-                    </div>
+                    </a>
                 ))}
             </div>
         </div>

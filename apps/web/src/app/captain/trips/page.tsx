@@ -71,6 +71,14 @@ export default async function CaptainTripsPage() {
                                 </form>
                             </div>
                         ) : null}
+
+                        {t.status === "ACCEPTED" ? (
+                            <form method="POST" action={`/api/captain/trips/${t.id}/complete`}>
+                                <button className={styles.secondary} type="submit">
+                                    Mark completed
+                                </button>
+                            </form>
+                        ) : null}
                     </div>
                 ))}
             </div>
