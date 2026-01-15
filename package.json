@@ -6,7 +6,7 @@
         "node": ">=20"
     },
     "scripts": {
-        "dev": "pnpm -r dev",
+        "dev": "pnpm --filter @lanchas/api --filter @lanchas/web dev",
         "build": "pnpm -r build",
         "lint": "pnpm -r lint",
         "typecheck": "pnpm -r typecheck",

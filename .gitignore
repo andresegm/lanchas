@@ -7,3 +7,10 @@ dist
 coverage
 .turbo
 
+# Local scratch / build artifacts
+.tmp-*.log
+*.tsbuildinfo
+
+# Local scratch / build artifacts
+.tmp-*.log
+*.tsbuildinfo

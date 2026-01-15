@@ -1,6 +1,6 @@
-import { proxyJson } from "@/lib/proxy";
+import { proxyAuthForm } from "@/lib/proxy";
 
 export async function POST(req: Request) {
-    return proxyJson(req, "/auth/logout");
+    return proxyAuthForm(req, "/auth/logout", { successRedirectTo: "/" });
 }
 

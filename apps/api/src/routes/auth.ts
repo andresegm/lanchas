@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync } from "fastify";
-import { prisma } from "@lanchas/prisma";
+import { Prisma, prisma } from "@lanchas/prisma";
 import { env } from "../env.js";
 import { clearAuthCookies, REFRESH_COOKIE, setAccessCookie, setRefreshCookie } from "../auth/cookies.js";
 import { hashPassword, randomToken, sha256Base64Url, verifyPassword } from "../auth/crypto.js";
@@ -21,10 +21,18 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
         const email = normalizeEmail(emailRaw);
         const passwordHash = await hashPassword(password);
 
-        const user = await prisma.user.create({
-            data: { email, passwordHash, role: "GUEST" },
-            select: { id: true, role: true, email: true }
-        });
+        let user: { id: string; role: "GUEST" | "CAPTAIN" | "BOTH"; email: string };
+        try {
+            user = await prisma.user.create({
+                data: { email, passwordHash, role: "GUEST" },
+                select: { id: true, role: true, email: true }
+            });
+        } catch (err) {
+            if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+                throw app.httpErrors.conflict("Email is already registered");
+            }
+            throw err;
+        }
 
         const access = await signAccessToken(app, { sub: user.id, role: user.role });
         const refreshPlain = randomToken(32);
