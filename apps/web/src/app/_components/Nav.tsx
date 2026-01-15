@@ -38,11 +38,20 @@ export async function Nav() {
 
             {authed ? (
                 <>
+                    <a href="/boats" className={styles.link}>
+                        Boats
+                    </a>
                     <a href="/dashboard" className={styles.link}>
                         Dashboard
                     </a>
+                    <a href="/trips" className={styles.link}>
+                        My trips
+                    </a>
                     <a href="/captain" className={styles.link}>
                         Captain
+                    </a>
+                    <a href="/captain/trips" className={styles.link}>
+                        Captain trips
                     </a>
                     <span className={styles.meta}>
                         {me?.user.email} • {me?.user.role}
@@ -55,6 +64,9 @@ export async function Nav() {
                 </>
             ) : (
                 <>
+                    <a href="/boats" className={styles.link}>
+                        Boats
+                    </a>
                     <a href="/login" className={styles.link}>
                         Login
                     </a>

@@ -1,0 +1,59 @@
+.wrap {
+    padding: 10px 0 34px;
+}
+
+.h1 {
+    margin: 0 0 8px;
+    letter-spacing: -0.4px;
+}
+
+.p {
+    margin: 0 0 16px;
+    opacity: 0.85;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.card {
+    text-decoration: none;
+    color: inherit;
+    padding: 16px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(15, 23, 42, 0.12);
+}
+
+.title {
+    font-weight: 900;
+    margin-bottom: 6px;
+}
+
+.meta {
+    font-size: 12px;
+    opacity: 0.75;
+    font-weight: 800;
+    margin-bottom: 10px;
+}
+
+.pricing {
+    font-size: 13px;
+}
+
+.ul {
+    margin: 0;
+    padding-left: 18px;
+}
+
+.dim {
+    opacity: 0.7;
+}
+
+@media (max-width: 720px) {
+    .grid {
+        grid-template-columns: 1fr;
+    }
+}
