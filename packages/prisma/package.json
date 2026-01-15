@@ -12,6 +12,7 @@
     "scripts": {
         "generate": "prisma generate",
         "migrate": "prisma migrate dev",
+        "migrate:init": "prisma migrate dev --name init",
         "studio": "prisma studio",
         "build": "tsc -p tsconfig.json",
         "dev": "tsc -p tsconfig.json --watch",

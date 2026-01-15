@@ -13,6 +13,7 @@
         "db:up": "docker compose up -d",
         "db:down": "docker compose down -v",
         "prisma:generate": "pnpm --filter @lanchas/prisma generate",
-        "prisma:migrate": "pnpm --filter @lanchas/prisma migrate"
+        "prisma:migrate": "pnpm --filter @lanchas/prisma migrate",
+        "prisma:migrate:init": "pnpm --filter @lanchas/prisma migrate:init"
     }
 }
