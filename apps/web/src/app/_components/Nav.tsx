@@ -41,6 +41,9 @@ export async function Nav() {
                     <a href="/dashboard" className={styles.link}>
                         Dashboard
                     </a>
+                    <a href="/captain" className={styles.link}>
+                        Captain
+                    </a>
                     <span className={styles.meta}>
                         {me?.user.email} • {me?.user.role}
                     </span>

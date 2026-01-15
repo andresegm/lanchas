@@ -9,9 +9,9 @@ export async function requireAuthed(app: FastifyInstance, req: any): Promise<Acc
 
 export async function requireCaptain(app: FastifyInstance, req: any) {
     const payload = await requireUser(app, req);
-    if (payload.role !== "CAPTAIN" && payload.role !== "BOTH") {
-        throw app.httpErrors.forbidden("Captain access required");
-    }
+    const user = await prisma.user.findUnique({ where: { id: payload.sub }, select: { role: true } });
+    if (!user) throw app.httpErrors.unauthorized("Not authenticated");
+    if (user.role !== "CAPTAIN" && user.role !== "BOTH") throw app.httpErrors.forbidden("Captain access required");
 
     const captain = await prisma.captain.findUnique({
         where: { userId: payload.sub },

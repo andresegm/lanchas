@@ -1,0 +1,151 @@
+.wrap {
+    padding: 10px 0 34px;
+}
+
+.h1 {
+    margin: 0 0 8px;
+    letter-spacing: -0.4px;
+}
+
+.h2 {
+    margin: 0 0 12px;
+    letter-spacing: -0.2px;
+}
+
+.h3 {
+    margin: 0 0 10px;
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.p {
+    margin: 0 0 16px;
+    opacity: 0.85;
+}
+
+.card {
+    margin: 14px 0;
+    padding: 18px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(15, 23, 42, 0.12);
+}
+
+.error {
+    margin: 10px 0 14px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(220, 38, 38, 0.25);
+    background: rgba(254, 226, 226, 0.7);
+}
+
+.form {
+    display: grid;
+    gap: 12px;
+}
+
+.row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.label {
+    display: grid;
+    gap: 6px;
+    font-weight: 800;
+}
+
+.input,
+.textarea {
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(15, 23, 42, 0.18);
+    font-size: 14px;
+}
+
+.primary {
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: none;
+    background: #0b1220;
+    color: white;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+.secondary {
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    background: rgba(255, 255, 255, 0.75);
+    color: #0b1220;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+.kv {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    background: rgba(255, 255, 255, 0.7);
+}
+
+.k {
+    font-size: 12px;
+    opacity: 0.7;
+    font-weight: 800;
+}
+
+.v {
+    font-size: 14px;
+    font-weight: 900;
+}
+
+.boats {
+    display: grid;
+    gap: 14px;
+}
+
+.boat {
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    background: rgba(255, 255, 255, 0.7);
+}
+
+.boatHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 10px;
+}
+
+.boatName {
+    font-weight: 900;
+}
+
+.meta {
+    font-size: 12px;
+    opacity: 0.7;
+    font-weight: 800;
+}
+
+.pricingGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 10px;
+}
+
+.current {
+    margin-top: 12px;
+}
+
+.ul {
+    margin: 8px 0 0;
+    padding-left: 18px;
+}

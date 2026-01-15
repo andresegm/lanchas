@@ -1,6 +1,8 @@
 import type { FastifyPluginAsync } from "fastify";
 import { prisma, type UserRole } from "@lanchas/prisma";
 import { requireAuthed, requireCaptain, upgradedRoleForCaptain } from "../auth/guards.js";
+import { setAccessCookie } from "../auth/cookies.js";
+import { signAccessToken } from "../auth/jwt.js";
 
 type CreateCaptainBody = {
     displayName?: string;
@@ -33,7 +35,7 @@ export const captainRoutes: FastifyPluginAsync = async (app) => {
         return { captain };
     });
 
-    app.post<{ Body: CreateCaptainBody }>("/captain", async (req) => {
+    app.post<{ Body: CreateCaptainBody }>("/captain", async (req, reply) => {
         const payload = await requireAuthed(app, req);
         const displayName = req.body.displayName?.trim();
         if (!displayName) throw app.httpErrors.badRequest("displayName is required");
@@ -56,6 +58,9 @@ export const captainRoutes: FastifyPluginAsync = async (app) => {
         });
 
         await prisma.user.update({ where: { id: payload.sub }, data: { role } });
+        // refresh access token so UI immediately reflects role (nav) without requiring re-login
+        const access = await signAccessToken(app, { sub: payload.sub, role: role as any });
+        setAccessCookie(reply, access);
         return { captain };
     });
 
