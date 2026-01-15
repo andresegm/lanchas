@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
+import { getApiBaseUrl } from "./apiBase";
 
 export async function proxyJson(req: Request, targetPath: string) {
-    const apiBase =
-        process.env.NEXT_PUBLIC_API_BASE_URL ??
-        (process.env.NODE_ENV !== "production" ? "http://localhost:3001" : undefined);
+    const apiBase = getApiBaseUrl();
     if (!apiBase) {
         return NextResponse.json({ error: "NEXT_PUBLIC_API_BASE_URL is not set" }, { status: 500 });
     }
@@ -11,14 +10,22 @@ export async function proxyJson(req: Request, targetPath: string) {
     const url = new URL(targetPath, apiBase);
     const body = req.method === "GET" || req.method === "HEAD" ? undefined : await req.text();
 
-    const res = await fetch(url, {
-        method: req.method,
-        headers: {
-            "content-type": req.headers.get("content-type") ?? "application/json",
-            cookie: req.headers.get("cookie") ?? ""
-        },
-        body
-    });
+    let res: Response;
+    try {
+        res = await fetch(url, {
+            method: req.method,
+            headers: {
+                "content-type": req.headers.get("content-type") ?? "application/json",
+                cookie: req.headers.get("cookie") ?? ""
+            },
+            body
+        });
+    } catch {
+        return NextResponse.json(
+            { error: "API unreachable", hint: "Start @lanchas/api on http://127.0.0.1:3001" },
+            { status: 502 }
+        );
+    }
 
     const out = new NextResponse(res.body, { status: res.status });
 
@@ -41,9 +48,7 @@ export async function proxyAuthForm(
     targetPath: string,
     opts?: { successRedirectTo?: string }
 ) {
-    const apiBase =
-        process.env.NEXT_PUBLIC_API_BASE_URL ??
-        (process.env.NODE_ENV !== "production" ? "http://localhost:3001" : undefined);
+    const apiBase = getApiBaseUrl();
     if (!apiBase) {
         return NextResponse.json({ error: "NEXT_PUBLIC_API_BASE_URL is not set" }, { status: 500 });
     }
@@ -67,14 +72,22 @@ export async function proxyAuthForm(
     }
 
     const url = new URL(targetPath, apiBase);
-    const res = await fetch(url, {
-        method: "POST",
-        headers: {
-            "content-type": "application/json",
-            cookie: req.headers.get("cookie") ?? ""
-        },
-        body: JSON.stringify(payload)
-    });
+    let res: Response;
+    try {
+        res = await fetch(url, {
+            method: "POST",
+            headers: {
+                "content-type": "application/json",
+                cookie: req.headers.get("cookie") ?? ""
+            },
+            body: JSON.stringify(payload)
+        });
+    } catch {
+        const back = req.headers.get("referer") ?? "/login";
+        const backUrl = new URL(back, req.url);
+        backUrl.searchParams.set("error", "API unreachable (is @lanchas/api running on 127.0.0.1:3001?)");
+        return NextResponse.redirect(backUrl, { status: 303 });
+    }
 
     const anyHeaders = res.headers as any;
     const setCookies: string[] =

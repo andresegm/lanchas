@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import styles from "./layout.module.css";
+import { Nav } from "./_components/Nav";
 
 export const metadata = {
     title: "Lanchas — Day Boat Marketplace",
@@ -13,10 +14,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 <header className={styles.header}>
                     <div className={styles.brand}>Lanchas</div>
                     <nav className={styles.nav}>
-                        <a href="/">Home</a>
-                        <a href="/login">Login</a>
-                        <a href="/register">Register</a>
-                        <a href="/dashboard">Dashboard</a>
+                        <Nav />
                     </nav>
                 </header>
                 <main className={styles.main}>{children}</main>

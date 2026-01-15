@@ -1,19 +1,13 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import styles from "./page.module.css";
+import { getApiBaseUrl } from "@/lib/apiBase";
 
 type MeResponse = { user: { id: string; email: string; role: string; createdAt: string } };
 
 export default async function DashboardPage() {
-    const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL;
-    if (!apiBase) {
-        return (
-            <div className={styles.card}>
-                <h1 className={styles.h1}>Dashboard</h1>
-                <p className={styles.p}>Missing NEXT_PUBLIC_API_BASE_URL.</p>
-            </div>
-        );
-    }
+    const apiBase = getApiBaseUrl();
+    if (!apiBase) redirect("/login");
 
     const cookieStore = await cookies();
     const cookieHeader = cookieStore
