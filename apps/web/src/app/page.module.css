@@ -1,25 +1,62 @@
 .wrap {
-    padding: 34px 0;
+    padding: 10px 0 34px;
+}
+
+.hero {
+    display: grid;
+    grid-template-columns: 1.4fr 0.6fr;
+    gap: 22px;
+    align-items: start;
+}
+
+.heroLeft {
+    padding: 26px 26px 22px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(15, 23, 42, 0.12);
+}
+
+.heroRight {
+    display: grid;
+    gap: 12px;
+}
+
+.kicker {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    opacity: 0.7;
+    margin-bottom: 10px;
 }
 
 .h1 {
-    font-size: 40px;
-    line-height: 1.1;
-    margin: 0 0 10px;
+    font-size: 52px;
+    line-height: 1.04;
+    margin: 0 0 12px;
     letter-spacing: -0.6px;
 }
 
 .p {
-    margin: 0 0 22px;
+    margin: 0 0 18px;
     font-size: 18px;
+    line-height: 1.6;
     opacity: 0.85;
-    max-width: 60ch;
+    max-width: 70ch;
+}
+
+.micro {
+    margin-top: 12px;
+    font-size: 13px;
+    opacity: 0.75;
+    font-weight: 600;
 }
 
 .ctaRow {
     display: flex;
     gap: 12px;
     flex-wrap: wrap;
+    margin-top: 6px;
 }
 
 .primary,
@@ -27,9 +64,9 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 10px 14px;
-    border-radius: 10px;
-    font-weight: 700;
+    padding: 11px 14px;
+    border-radius: 12px;
+    font-weight: 800;
     text-decoration: none;
 }
 
@@ -47,4 +84,101 @@
 .primary:hover,
 .secondary:hover {
     transform: translateY(-1px);
+}
+
+.statCard {
+    padding: 16px 16px 14px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(15, 23, 42, 0.12);
+}
+
+.statTitle {
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+
+.ul {
+    margin: 0;
+    padding-left: 18px;
+    opacity: 0.85;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.section {
+    margin-top: 22px;
+}
+
+.h2 {
+    margin: 0 0 10px;
+    letter-spacing: -0.2px;
+    font-weight: 800;
+}
+
+.steps {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.step {
+    display: flex;
+    gap: 10px;
+    padding: 16px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(15, 23, 42, 0.12);
+}
+
+.stepNum {
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    background: rgba(2, 132, 199, 0.12);
+    border: 1px solid rgba(2, 132, 199, 0.25);
+}
+
+.stepTitle {
+    font-weight: 800;
+    margin-bottom: 2px;
+}
+
+.stepText {
+    font-size: 13px;
+    opacity: 0.8;
+    font-weight: 600;
+}
+
+.disclaimer {
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    font-size: 13px;
+    opacity: 0.85;
+}
+
+@media (max-width: 920px) {
+    .hero {
+        grid-template-columns: 1fr;
+    }
+
+    .steps {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 520px) {
+    .h1 {
+        font-size: 40px;
+    }
+
+    .heroLeft {
+        padding: 18px 18px 16px;
+    }
 }
