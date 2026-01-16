@@ -1,10 +1,10 @@
 import type { FastifyPluginAsync } from "fastify";
-import { BoatPricingType, IncidentType, PaymentStatus, ReviewTargetType, TripStatus, prisma } from "@lanchas/prisma";
+import { IncidentType, PaymentStatus, ReviewTargetType, TripStatus, prisma } from "@lanchas/prisma";
 import { requireAuthed, requireCaptain } from "../auth/guards.js";
 
 type CreateTripBody = {
     boatId?: string;
-    pricingType?: "PRIVATE_HOURLY" | "PER_PERSON";
+    pricingType?: "PRIVATE_HOURLY";
     startAt?: string;
     endAt?: string;
     notes?: string;
@@ -52,9 +52,7 @@ export const tripsRoutes: FastifyPluginAsync = async (app) => {
         if (!boatId) throw app.httpErrors.badRequest("boatId is required");
 
         const pricingType = req.body.pricingType;
-        if (pricingType !== "PRIVATE_HOURLY" && pricingType !== "PER_PERSON") {
-            throw app.httpErrors.badRequest("pricingType is required");
-        }
+        if (pricingType !== "PRIVATE_HOURLY") throw app.httpErrors.badRequest("Only PRIVATE_HOURLY is supported for now");
 
         const startAt = parseDateIso(req.body.startAt);
         const endAt = parseDateIso(req.body.endAt);
@@ -68,7 +66,7 @@ export const tripsRoutes: FastifyPluginAsync = async (app) => {
         if (!boat) throw app.httpErrors.notFound("Boat not found");
 
         const activePricing = await prisma.boatPricing.findFirst({
-            where: { boatId, type: pricingType as any, activeTo: null },
+            where: { boatId, type: "PRIVATE_HOURLY" as any, activeTo: null },
             orderBy: { activeFrom: "desc" }
         });
         if (!activePricing) throw app.httpErrors.badRequest("Boat has no active pricing for this type");
@@ -77,25 +75,14 @@ export const tripsRoutes: FastifyPluginAsync = async (app) => {
         const minHours = Math.max(boat.minimumHours, activePricing.minimumTripDurationHours);
         if (hours < minHours) throw app.httpErrors.badRequest(`Trip must be at least ${minHours} hours`);
 
-        const snapshot =
-            pricingType === "PRIVATE_HOURLY"
-                ? {
-                    type: "PRIVATE_HOURLY",
-                    currency: activePricing.currency,
-                    privateHourlyRateCents: activePricing.privateHourlyRateCents,
-                    minimumTripDurationHours: activePricing.minimumTripDurationHours
-                }
-                : {
-                    type: "PER_PERSON",
-                    currency: activePricing.currency,
-                    perPersonRateCents: activePricing.perPersonRateCents,
-                    minimumTripDurationHours: activePricing.minimumTripDurationHours
-                };
+        const snapshot = {
+            type: "PRIVATE_HOURLY",
+            currency: activePricing.currency,
+            privateHourlyRateCents: activePricing.privateHourlyRateCents,
+            minimumTripDurationHours: activePricing.minimumTripDurationHours
+        };
 
-        const baseSubtotal =
-            pricingType === "PRIVATE_HOURLY"
-                ? (activePricing.privateHourlyRateCents ?? 0) * hours
-                : (activePricing.perPersonRateCents ?? 0) * 1;
+        const baseSubtotal = (activePricing.privateHourlyRateCents ?? 0) * hours;
 
         const commissionRate = 0.18;
         const commissionCents = Math.round(baseSubtotal * commissionRate);
@@ -123,42 +110,7 @@ export const tripsRoutes: FastifyPluginAsync = async (app) => {
         return { trip };
     });
 
-    // Join an existing per-person trip (updates totals using pricing snapshot)
-    app.post<{ Params: { id: string } }>("/trips/:id/join", async (req) => {
-        const payload = await requireAuthed(app, req);
-        const trip = await prisma.trip.findUnique({
-            where: { id: req.params.id },
-            include: { participants: true }
-        });
-        if (!trip) throw app.httpErrors.notFound("Trip not found");
-
-        const snap: any = trip.pricingSnapshot;
-        if (snap?.type !== "PER_PERSON") throw app.httpErrors.badRequest("Only per-person trips can be joined");
-        if (trip.status === TripStatus.CANCELED || trip.status === TripStatus.COMPLETED) {
-            throw app.httpErrors.badRequest("Trip not joinable");
-        }
-
-        const exists = trip.participants.some((p) => p.userId === payload.sub);
-        if (exists) return { trip };
-
-        const boat = await prisma.boat.findUnique({ where: { id: trip.boatId }, select: { maxPassengers: true } });
-        if (!boat) throw app.httpErrors.badRequest("Boat not found");
-        if (trip.participants.length + 1 > boat.maxPassengers) throw app.httpErrors.badRequest("Boat is full");
-
-        await prisma.tripParticipant.create({ data: { tripId: trip.id, userId: payload.sub } });
-
-        const perPerson = Number(snap.perPersonRateCents ?? 0);
-        const subtotalCents = perPerson * (trip.participants.length + 1);
-        const commissionCents = Math.round(subtotalCents * trip.commissionRate);
-        const totalCents = subtotalCents + commissionCents;
-
-        const updated = await prisma.trip.update({
-            where: { id: trip.id },
-            data: { subtotalCents, commissionCents, totalCents },
-            include: { participants: true }
-        });
-        return { trip: updated };
-    });
+    // (Per-person join intentionally not supported in current MVP)
 
     // Captain accepts/rejects
     app.post<{ Params: { id: string } }>("/trips/:id/accept", async (req) => {

@@ -41,9 +41,6 @@ export async function Nav() {
                     <a href="/boats" className={styles.link}>
                         Boats
                     </a>
-                    <a href="/dashboard" className={styles.link}>
-                        Dashboard
-                    </a>
                     <a href="/trips" className={styles.link}>
                         My trips
                     </a>
@@ -53,9 +50,9 @@ export async function Nav() {
                     <a href="/captain/trips" className={styles.link}>
                         Captain trips
                     </a>
-                    <span className={styles.meta}>
-                        {me?.user.email} • {me?.user.role}
-                    </span>
+                    <a href="/profile" className={styles.meta}>
+                        {me?.user.email}
+                    </a>
                     <form method="POST" action="/api/auth/logout">
                         <button className={styles.button} type="submit">
                             Logout

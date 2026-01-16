@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getApiBaseUrl } from "@/lib/apiBase";
 import styles from "./page.module.css";
+import { formatUsdFromCents } from "@/lib/money";
 
 type CaptainTripsResponse = {
     trips: Array<{
@@ -54,7 +55,7 @@ export default async function CaptainTripsPage() {
                             {t.createdBy.email} • {t.startAt} → {t.endAt}
                         </div>
                         <div className={styles.meta}>
-                            Total: {t.totalCents} {t.currency} • Payment: {t.payment?.status ?? "NONE"}
+                            Total: {formatUsdFromCents(t.totalCents)} {t.currency} • Payment: {t.payment?.status ?? "NONE"}
                         </div>
 
                         {t.status === "REQUESTED" ? (

@@ -37,7 +37,7 @@ export default async function LoginPage({
                     />
                 </label>
 
-                <input type="hidden" name="redirectTo" value="/dashboard" />
+                <input type="hidden" name="redirectTo" value="/profile" />
 
                 <button className={styles.primary} type="submit">
                     Login

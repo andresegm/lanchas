@@ -3,12 +3,28 @@ import { BoatPricingType, prisma } from "@lanchas/prisma";
 import { requireCaptain } from "../auth/guards.js";
 
 type CreatePricingBody = {
-    type?: "PRIVATE_HOURLY" | "PER_PERSON";
+    type?: "PRIVATE_HOURLY";
     currency?: string;
+    // preferred (dollars)
+    privateHourlyRate?: number;
+    // backwards-compat (cents)
     privateHourlyRateCents?: number;
-    perPersonRateCents?: number;
     minimumTripDurationHours?: number;
 };
+
+function pickRateCents(opts: { dollars?: unknown; cents?: unknown }) {
+    if (opts.dollars !== undefined && opts.dollars !== null && opts.dollars !== "") {
+        const n = Number(opts.dollars);
+        if (!Number.isFinite(n)) return null;
+        return Math.round(n * 100);
+    }
+    if (opts.cents !== undefined && opts.cents !== null && opts.cents !== "") {
+        const n = Number(opts.cents);
+        if (!Number.isFinite(n)) return null;
+        return Math.round(n);
+    }
+    return null;
+}
 
 export const boatsRoutes: FastifyPluginAsync = async (app) => {
     app.get("/boats", async () => {
@@ -41,7 +57,7 @@ export const boatsRoutes: FastifyPluginAsync = async (app) => {
         if (boat.captainId !== captain.id) throw app.httpErrors.forbidden("Not your boat");
 
         const type = req.body.type;
-        if (type !== "PRIVATE_HOURLY" && type !== "PER_PERSON") throw app.httpErrors.badRequest("type is required");
+        if (type !== "PRIVATE_HOURLY") throw app.httpErrors.badRequest("Only PRIVATE_HOURLY is supported for now");
 
         const minimumTripDurationHours = Number(req.body.minimumTripDurationHours);
         if (!Number.isFinite(minimumTripDurationHours) || minimumTripDurationHours < 1) {
@@ -50,41 +66,20 @@ export const boatsRoutes: FastifyPluginAsync = async (app) => {
 
         const currency = (req.body.currency?.trim() || "USD").toUpperCase();
 
-        if (type === "PRIVATE_HOURLY") {
-            const rate = Number(req.body.privateHourlyRateCents);
-            if (!Number.isFinite(rate) || rate < 1) throw app.httpErrors.badRequest("privateHourlyRateCents must be >= 1");
-
-            await prisma.boatPricing.updateMany({
-                where: { boatId: req.params.id, type: BoatPricingType.PRIVATE_HOURLY, activeTo: null },
-                data: { activeTo: new Date() }
-            });
-
-            const pricing = await prisma.boatPricing.create({
-                data: {
-                    boatId: req.params.id,
-                    type: BoatPricingType.PRIVATE_HOURLY,
-                    currency,
-                    privateHourlyRateCents: rate,
-                    minimumTripDurationHours
-                }
-            });
-            return { pricing };
-        }
-
-        const rate = Number(req.body.perPersonRateCents);
-        if (!Number.isFinite(rate) || rate < 1) throw app.httpErrors.badRequest("perPersonRateCents must be >= 1");
+        const rate = pickRateCents({ dollars: req.body.privateHourlyRate, cents: req.body.privateHourlyRateCents });
+        if (rate === null || rate < 1) throw app.httpErrors.badRequest("privateHourlyRate (dollars) is required");
 
         await prisma.boatPricing.updateMany({
-            where: { boatId: req.params.id, type: BoatPricingType.PER_PERSON, activeTo: null },
+            where: { boatId: req.params.id, type: BoatPricingType.PRIVATE_HOURLY, activeTo: null },
             data: { activeTo: new Date() }
         });
 
         const pricing = await prisma.boatPricing.create({
             data: {
                 boatId: req.params.id,
-                type: BoatPricingType.PER_PERSON,
+                type: BoatPricingType.PRIVATE_HOURLY,
                 currency,
-                perPersonRateCents: rate,
+                privateHourlyRateCents: rate,
                 minimumTripDurationHours
             }
         });

@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import styles from "./page.module.css";
 import { getApiBaseUrl } from "@/lib/apiBase";
+import { formatUsdFromCents } from "@/lib/money";
 
 type CaptainMe = {
     captain: null | {
@@ -154,26 +155,8 @@ export default async function CaptainPage({
                                                 <form method="POST" action={`/api/boats/${b.id}/pricing`} className={styles.form}>
                                                     <input type="hidden" name="type" value="PRIVATE_HOURLY" />
                                                     <label className={styles.label}>
-                                                        <span>Rate (cents)</span>
-                                                        <input className={styles.input} name="privateHourlyRateCents" type="number" min={1} required />
-                                                    </label>
-                                                    <label className={styles.label}>
-                                                        <span>Min trip duration (hours)</span>
-                                                        <input className={styles.input} name="minimumTripDurationHours" type="number" min={1} required />
-                                                    </label>
-                                                    <button className={styles.secondary} type="submit">
-                                                        Set pricing
-                                                    </button>
-                                                </form>
-                                            </div>
-
-                                            <div>
-                                                <h3 className={styles.h3}>Per-person</h3>
-                                                <form method="POST" action={`/api/boats/${b.id}/pricing`} className={styles.form}>
-                                                    <input type="hidden" name="type" value="PER_PERSON" />
-                                                    <label className={styles.label}>
-                                                        <span>Rate per person (cents)</span>
-                                                        <input className={styles.input} name="perPersonRateCents" type="number" min={1} required />
+                                                        <span>Rate (USD)</span>
+                                                        <input className={styles.input} name="privateHourlyRate" type="number" min={0.01} step={0.01} required />
                                                     </label>
                                                     <label className={styles.label}>
                                                         <span>Min trip duration (hours)</span>
@@ -186,19 +169,19 @@ export default async function CaptainPage({
                                             </div>
                                         </div>
 
-                                        {b.pricings.length ? (
+                                        {b.pricings.some((p) => p.type === "PRIVATE_HOURLY") ? (
                                             <div className={styles.current}>
                                                 <div className={styles.k}>Active pricing</div>
                                                 <ul className={styles.ul}>
-                                                    {b.pricings.map((p) => (
-                                                        <li key={p.id}>
-                                                            <strong>{p.type}</strong> —{" "}
-                                                            {p.type === "PRIVATE_HOURLY"
-                                                                ? `${p.privateHourlyRateCents} ${p.currency}/hr`
-                                                                : `${p.perPersonRateCents} ${p.currency}/person`}{" "}
-                                                            (min {p.minimumTripDurationHours}h)
-                                                        </li>
-                                                    ))}
+                                                    {b.pricings
+                                                        .filter((p) => p.type === "PRIVATE_HOURLY")
+                                                        .map((p) => (
+                                                            <li key={p.id}>
+                                                                <strong>{p.type}</strong> —{" "}
+                                                                {`${formatUsdFromCents(p.privateHourlyRateCents)} ${p.currency}/hr`} (min{" "}
+                                                                {p.minimumTripDurationHours}h)
+                                                            </li>
+                                                        ))}
                                                 </ul>
                                             </div>
                                         ) : null}

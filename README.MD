@@ -42,12 +42,11 @@
 - **Pricing**
   - Each boat supports:
     - Private pricing (flat per hour)
-    - Per-person pricing
     - Minimum trip duration
   - Captain-controlled prices
   - Platform does not dynamically price
 - **Trips (Bookings)**
-  - Users can: Request a trip, Join an existing per-person trip
+  - Users can: Request a trip
   - Captains can: Accept / reject requests
   - Trip lifecycle: requested → accepted → active → completed / canceled
 - **Payments**

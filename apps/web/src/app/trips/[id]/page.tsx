@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getApiBaseUrl } from "@/lib/apiBase";
 import styles from "./page.module.css";
+import { formatUsdFromCents } from "@/lib/money";
 
 type TripDetail = {
     trip: {
@@ -54,7 +55,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
                 {t.boat.name} • {t.boat.captain.displayName} • {t.startAt} → {t.endAt}
             </div>
             <div className={styles.meta}>
-                Status: <strong>{t.status}</strong> • Total: {t.totalCents} {t.currency} • Payment:{" "}
+                Status: <strong>{t.status}</strong> • Total: {formatUsdFromCents(t.totalCents)} {t.currency} • Payment:{" "}
                 {t.payment?.status ?? "NONE"}
             </div>
             {t.notes ? <div className={styles.notes}>Notes: {t.notes}</div> : null}
@@ -116,24 +117,6 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
                         <h3 className={styles.h3}>Review captain</h3>
                         <form method="POST" action={`/api/trips/${t.id}/reviews`} className={styles.form}>
                             <input type="hidden" name="targetType" value="CAPTAIN" />
-                            <label className={styles.label}>
-                                <span>Rating (1-5)</span>
-                                <input className={styles.input} name="rating" type="number" min={1} max={5} required />
-                            </label>
-                            <label className={styles.label}>
-                                <span>Comment (optional)</span>
-                                <textarea className={styles.textarea} name="comment" rows={3} />
-                            </label>
-                            <button className={styles.secondary} type="submit">
-                                Submit review
-                            </button>
-                        </form>
-                    </div>
-
-                    <div>
-                        <h3 className={styles.h3}>Review guest</h3>
-                        <form method="POST" action={`/api/trips/${t.id}/reviews`} className={styles.form}>
-                            <input type="hidden" name="targetType" value="GUEST" />
                             <label className={styles.label}>
                                 <span>Rating (1-5)</span>
                                 <input className={styles.input} name="rating" type="number" min={1} max={5} required />

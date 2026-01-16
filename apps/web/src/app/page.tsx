@@ -14,8 +14,8 @@ export default function HomePage() {
                 <a className={styles.secondary} href="/login">
                     Login
                 </a>
-                <a className={styles.secondary} href="/dashboard">
-                    Dashboard
+                <a className={styles.secondary} href="/profile">
+                    Profile
                 </a>
             </div>
         </div>

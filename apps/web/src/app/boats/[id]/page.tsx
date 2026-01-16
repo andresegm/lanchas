@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getApiBaseUrl } from "@/lib/apiBase";
 import styles from "./page.module.css";
+import { formatUsdFromCents } from "@/lib/money";
 
 type BoatResponse = {
     boat: {
@@ -34,7 +35,6 @@ export default async function BoatPage({ params }: { params: Promise<{ id: strin
     const b = data.boat;
 
     const privatePricing = b.pricings.find((p) => p.type === "PRIVATE_HOURLY");
-    const perPersonPricing = b.pricings.find((p) => p.type === "PER_PERSON");
 
     return (
         <div className={styles.wrap}>
@@ -49,11 +49,11 @@ export default async function BoatPage({ params }: { params: Promise<{ id: strin
 
             <div className={styles.grid}>
                 <div className={styles.card}>
-                    <h2 className={styles.h2}>Request a private trip</h2>
+                    <h2 className={styles.h2}>Request a trip</h2>
                     {privatePricing ? (
                         <>
                             <div className={styles.priceLine}>
-                                {privatePricing.privateHourlyRateCents} {privatePricing.currency}/hr • min{" "}
+                                {formatUsdFromCents(privatePricing.privateHourlyRateCents)} {privatePricing.currency}/hr • min{" "}
                                 {privatePricing.minimumTripDurationHours}h
                             </div>
                             <form method="POST" action="/api/trips/create" className={styles.form}>
@@ -79,36 +79,6 @@ export default async function BoatPage({ params }: { params: Promise<{ id: strin
                         </>
                     ) : (
                         <p className={styles.dim}>No private pricing configured.</p>
-                    )}
-                </div>
-
-                <div className={styles.card}>
-                    <h2 className={styles.h2}>Per-person trip</h2>
-                    {perPersonPricing ? (
-                        <>
-                            <div className={styles.priceLine}>
-                                {perPersonPricing.perPersonRateCents} {perPersonPricing.currency}/person • min{" "}
-                                {perPersonPricing.minimumTripDurationHours}h
-                            </div>
-                            <form method="POST" action="/api/trips/create" className={styles.form}>
-                                <input type="hidden" name="boatId" value={b.id} />
-                                <input type="hidden" name="pricingType" value="PER_PERSON" />
-
-                                <label className={styles.label}>
-                                    <span>Start (ISO)</span>
-                                    <input className={styles.input} name="startAt" placeholder="2026-01-20T09:00:00-04:00" required />
-                                </label>
-                                <label className={styles.label}>
-                                    <span>End (ISO)</span>
-                                    <input className={styles.input} name="endAt" placeholder="2026-01-20T13:00:00-04:00" required />
-                                </label>
-                                <button className={styles.secondary} type="submit">
-                                    Create per-person trip
-                                </button>
-                            </form>
-                        </>
-                    ) : (
-                        <p className={styles.dim}>No per-person pricing configured.</p>
                     )}
                 </div>
             </div>
