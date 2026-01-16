@@ -1,5 +1,6 @@
 import { getApiBaseUrl } from "@/lib/apiBase";
 import styles from "./page.module.css";
+import { formatUsdFromCents } from "@/lib/money";
 
 type BoatsResponse = {
     boats: Array<{
@@ -38,15 +39,15 @@ export default async function BoatsPage() {
                         <div className={styles.pricing}>
                             {b.pricings.length ? (
                                 <ul className={styles.ul}>
-                                    {b.pricings.map((p) => (
-                                        <li key={p.type}>
-                                            <strong>{p.type}</strong>{" "}
-                                            {p.type === "PRIVATE_HOURLY"
-                                                ? `${p.privateHourlyRateCents} ${p.currency}/hr`
-                                                : `${p.perPersonRateCents} ${p.currency}/person`}{" "}
-                                            (min {p.minimumTripDurationHours}h)
-                                        </li>
-                                    ))}
+                                    {b.pricings
+                                        .filter((p) => p.type === "PRIVATE_HOURLY")
+                                        .map((p) => (
+                                            <li key={p.type}>
+                                                <strong>{p.type}</strong>{" "}
+                                                {p.type === "PRIVATE_HOURLY" ? `${formatUsdFromCents(p.privateHourlyRateCents)} ${p.currency}/hr` : ""}{" "}
+                                                (min {p.minimumTripDurationHours}h)
+                                            </li>
+                                        ))}
                                 </ul>
                             ) : (
                                 <span className={styles.dim}>No active pricing</span>
