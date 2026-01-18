@@ -15,6 +15,7 @@ type CaptainMe = {
             name: string;
             maxPassengers: number;
             minimumHours: number;
+            photos: Array<{ id: string; url: string; sortOrder: number }>;
             pricings: Array<{
                 id: string;
                 type: "PRIVATE_HOURLY" | "PER_PERSON";
@@ -147,6 +148,23 @@ export default async function CaptainPage({
                                                     {b.maxPassengers} pax • min {b.minimumHours}h
                                                 </div>
                                             </div>
+                                        </div>
+
+                                        <div className={styles.photoRow}>
+                                            {b.photos[0]?.url ? (
+                                                <img className={styles.photo} src={b.photos[0].url} alt={`${b.name} photo`} />
+                                            ) : (
+                                                <div className={styles.photoPlaceholder} aria-hidden="true" />
+                                            )}
+                                            <form className={styles.photoForm} method="POST" action={`/api/captain/boats/${b.id}/photos`}>
+                                                <label className={styles.label}>
+                                                    <span>Add photo URL</span>
+                                                    <input className={styles.input} name="url" placeholder="https://..." required />
+                                                </label>
+                                                <button className={styles.secondary} type="submit">
+                                                    Add photo
+                                                </button>
+                                            </form>
                                         </div>
 
                                         <div className={styles.pricingGrid}>

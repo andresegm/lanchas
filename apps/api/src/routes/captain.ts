@@ -18,6 +18,11 @@ type CreateBoatBody = {
     insuranceRef?: string | null;
 };
 
+type AddBoatPhotoBody = {
+    url?: string;
+    sortOrder?: number;
+};
+
 export const captainRoutes: FastifyPluginAsync = async (app) => {
     app.get("/captain/me", async (req) => {
         const payload = await requireAuthed(app, req);
@@ -26,7 +31,8 @@ export const captainRoutes: FastifyPluginAsync = async (app) => {
             include: {
                 boats: {
                     include: {
-                        pricings: { where: { activeTo: null }, orderBy: { activeFrom: "desc" } }
+                        pricings: { where: { activeTo: null }, orderBy: { activeFrom: "desc" } },
+                        photos: { orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }], take: 20 }
                     },
                     orderBy: { createdAt: "desc" }
                 }
@@ -90,6 +96,25 @@ export const captainRoutes: FastifyPluginAsync = async (app) => {
             }
         });
         return { boat };
+    });
+
+    app.post<{ Params: { boatId: string }; Body: AddBoatPhotoBody }>("/captain/boats/:boatId/photos", async (req) => {
+        const { captain } = await requireCaptain(app, req);
+        const boat = await prisma.boat.findUnique({ where: { id: req.params.boatId }, select: { captainId: true } });
+        if (!boat) throw app.httpErrors.notFound("Boat not found");
+        if (boat.captainId !== captain.id) throw app.httpErrors.forbidden("Not your boat");
+
+        const url = req.body.url?.trim();
+        if (!url) throw app.httpErrors.badRequest("url is required");
+        if (!/^https?:\/\//i.test(url)) throw app.httpErrors.badRequest("url must be http(s)");
+
+        const sortOrder = req.body.sortOrder === undefined ? 0 : Number(req.body.sortOrder);
+        if (!Number.isFinite(sortOrder) || sortOrder < 0) throw app.httpErrors.badRequest("sortOrder must be >= 0");
+
+        const photo = await prisma.boatPhoto.create({
+            data: { boatId: req.params.boatId, url, sortOrder }
+        });
+        return { photo };
     });
 };
 

@@ -102,9 +102,22 @@ model Boat {
 
   captain  Captain      @relation(fields: [captainId], references: [id], onDelete: Cascade)
   pricings BoatPricing[]
+  photos   BoatPhoto[]
   trips    Trip[]
 
   @@index([captainId])
+}
+
+model BoatPhoto {
+  id        String   @id @default(cuid())
+  boatId    String
+  url       String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  boat Boat @relation(fields: [boatId], references: [id], onDelete: Cascade)
+
+  @@index([boatId])
 }
 
 model BoatPricing {

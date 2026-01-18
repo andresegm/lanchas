@@ -31,7 +31,8 @@ export const boatsRoutes: FastifyPluginAsync = async (app) => {
         const boats = await prisma.boat.findMany({
             include: {
                 captain: { select: { id: true, displayName: true } },
-                pricings: { where: { activeTo: null }, orderBy: { activeFrom: "desc" } }
+                pricings: { where: { activeTo: null }, orderBy: { activeFrom: "desc" } },
+                photos: { orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }], take: 5 }
             },
             orderBy: { createdAt: "desc" }
         });
@@ -43,7 +44,8 @@ export const boatsRoutes: FastifyPluginAsync = async (app) => {
             where: { id: req.params.id },
             include: {
                 captain: { select: { id: true, displayName: true } },
-                pricings: { where: { activeTo: null }, orderBy: { activeFrom: "desc" } }
+                pricings: { where: { activeTo: null }, orderBy: { activeFrom: "desc" } },
+                photos: { orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }], take: 20 }
             }
         });
         if (!boat) throw app.httpErrors.notFound("Boat not found");

@@ -44,11 +44,8 @@ export async function Nav() {
                     <a href="/trips" className={styles.link}>
                         My trips
                     </a>
-                    <a href="/captain" className={styles.link}>
-                        Captain
-                    </a>
-                    <a href="/captain/trips" className={styles.link}>
-                        Captain trips
+                    <a href="/captain/log" className={styles.link}>
+                        Captain Log
                     </a>
                     <a href="/profile" className={styles.meta}>
                         {me?.user.email}

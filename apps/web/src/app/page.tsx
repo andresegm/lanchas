@@ -1,86 +1,136 @@
 import styles from "./page.module.css";
+import { getApiBaseUrl } from "@/lib/apiBase";
+import { formatUsdFromCents } from "@/lib/money";
 
-export default function HomePage() {
+type BoatsResponse = {
+    boats: Array<{
+        id: string;
+        name: string;
+        captain: { displayName: string };
+        photos?: Array<{ id: string; url: string }>;
+        pricings: Array<{
+            type: "PRIVATE_HOURLY" | "PER_PERSON";
+            currency: string;
+            privateHourlyRateCents: number | null;
+        }>;
+    }>;
+};
+
+async function fetchFeaturedBoats() {
+    const apiBase = getApiBaseUrl();
+    if (!apiBase) return [];
+    try {
+        const res = await fetch(new URL("/boats", apiBase), { cache: "no-store" });
+        if (!res.ok) return [];
+        const data = (await res.json()) as BoatsResponse;
+        return data.boats.slice(0, 8);
+    } catch {
+        return [];
+    }
+}
+
+export default async function HomePage() {
+    const boats = await fetchFeaturedBoats();
+
     return (
         <div className={styles.wrap}>
-            <section className={styles.hero}>
-                <div className={styles.heroLeft}>
-                    <div className={styles.kicker}>Lechería • Same-day & scheduled trips</div>
-                    <h1 className={styles.h1}>Book a day boat trip in minutes.</h1>
-                    <p className={styles.p}>
-                        Lanchas is a marketplace that connects independent captains with locals and tourists looking for
-                        safe, straightforward day trips to nearby islands. We don’t operate boats—we make booking simple
-                        and trusted.
+            <section className={styles.mast}>
+                <div className={styles.mastInner}>
+                    <div className={styles.kicker}>Lechería • Day trips to nearby islands</div>
+                    <h1 className={styles.h1}>Book a boat day trip like booking a stay.</h1>
+                    <p className={styles.sub}>
+                        Browse real boats from independent captains, request a time slot, and track the booking end‑to‑end.
                     </p>
 
-                    <div className={styles.ctaRow}>
-                        <a className={styles.primary} href="/boats">
-                            Browse boats
+                    <form className={styles.search} action="/boats" method="GET">
+                        <div className={styles.seg}>
+                            <div className={styles.segLabel}>Where</div>
+                            <div className={styles.segValue}>Lechería</div>
+                        </div>
+                        <div className={styles.divider} />
+                        <label className={styles.seg}>
+                            <div className={styles.segLabel}>Date</div>
+                            <input className={styles.input} name="date" type="date" />
+                        </label>
+                        <div className={styles.divider} />
+                        <label className={styles.seg}>
+                            <div className={styles.segLabel}>Hours</div>
+                            <input className={styles.input} name="hours" type="number" min={1} placeholder="4" />
+                        </label>
+                        <div className={styles.divider} />
+                        <label className={styles.seg}>
+                            <div className={styles.segLabel}>Passengers</div>
+                            <input className={styles.input} name="pax" type="number" min={1} placeholder="6" />
+                        </label>
+                        <button className={styles.searchBtn} type="submit">
+                            Search
+                        </button>
+                    </form>
+
+                    <div className={styles.chips}>
+                        <a className={styles.chip} href="/boats">
+                            Popular
                         </a>
-                        <a className={styles.secondary} href="/register">
-                            Create account
+                        <a className={styles.chip} href="/boats">
+                            Islands
                         </a>
-                        <a className={styles.secondary} href="/captain">
+                        <a className={styles.chip} href="/boats">
+                            Family-friendly
+                        </a>
+                        <a className={styles.chip} href="/boats">
+                            Sunset
+                        </a>
+                        <a className={styles.chip} href="/captain/log">
                             List your boat
                         </a>
                     </div>
-
-                    <div className={styles.micro}>
-                        No WhatsApp chaos • Clear pricing • Payments recorded • Reviews & incident reporting
-                    </div>
-                </div>
-
-                <div className={styles.heroRight}>
-                    <div className={styles.statCard}>
-                        <div className={styles.statTitle}>For passengers</div>
-                        <ul className={styles.ul}>
-                            <li>Find boats fast</li>
-                            <li>Request a trip with upfront pricing</li>
-                            <li>Track status and pay (stub for now)</li>
-                        </ul>
-                    </div>
-                    <div className={styles.statCard}>
-                        <div className={styles.statTitle}>For captains</div>
-                        <ul className={styles.ul}>
-                            <li>Create your profile</li>
-                            <li>Set your hourly rate</li>
-                            <li>Accept/complete trips, earn more</li>
-                        </ul>
-                    </div>
                 </div>
             </section>
 
             <section className={styles.section}>
-                <h2 className={styles.h2}>How it works</h2>
-                <div className={styles.steps}>
-                    <div className={styles.step}>
-                        <div className={styles.stepNum}>1</div>
-                        <div className={styles.stepBody}>
-                            <div className={styles.stepTitle}>Browse</div>
-                            <div className={styles.stepText}>Explore boats and captains in Lechería.</div>
-                        </div>
-                    </div>
-                    <div className={styles.step}>
-                        <div className={styles.stepNum}>2</div>
-                        <div className={styles.stepBody}>
-                            <div className={styles.stepTitle}>Request</div>
-                            <div className={styles.stepText}>Submit a trip request with start/end time.</div>
-                        </div>
-                    </div>
-                    <div className={styles.step}>
-                        <div className={styles.stepNum}>3</div>
-                        <div className={styles.stepBody}>
-                            <div className={styles.stepTitle}>Go</div>
-                            <div className={styles.stepText}>Captain accepts, you pay, and the trip happens.</div>
-                        </div>
-                    </div>
+                <div className={styles.sectionHead}>
+                    <h2 className={styles.h2}>Featured boats</h2>
+                    <a className={styles.more} href="/boats">
+                        See all
+                    </a>
                 </div>
-            </section>
 
-            <section className={styles.section}>
+                <div className={styles.grid}>
+                    {(boats.length ? boats : new Array(6).fill(null)).map((b, idx) =>
+                        b ? (
+                            <a key={b.id} className={styles.card} href={`/boats/${b.id}`}>
+                                {b.photos?.[0]?.url ? (
+                                    <img className={styles.thumbImg} src={b.photos[0].url} alt={`${b.name} photo`} />
+                                ) : (
+                                    <div className={styles.thumb} aria-hidden="true" />
+                                )}
+                                <div className={styles.cardBody}>
+                                    <div className={styles.cardTitle}>{b.name}</div>
+                                    <div className={styles.cardMeta}>{b.captain.displayName}</div>
+                                    <div className={styles.cardMeta}>
+                                        {(() => {
+                                            const p = b.pricings.find((x: { type: string }) => x.type === "PRIVATE_HOURLY");
+                                            if (!p) return "Hourly rate not set";
+                                            return `${formatUsdFromCents(p.privateHourlyRateCents)} ${p.currency}/hr`;
+                                        })()}
+                                    </div>
+                                </div>
+                            </a>
+                        ) : (
+                            <div key={`sk_${idx}`} className={styles.card} aria-hidden="true">
+                                <div className={styles.thumb} />
+                                <div className={styles.cardBody}>
+                                    <div className={styles.skelLine} />
+                                    <div className={styles.skelLineSm} />
+                                </div>
+                            </div>
+                        )
+                    )}
+                </div>
+
                 <div className={styles.disclaimer}>
-                    <strong>Important:</strong> Lanchas is a marketplace. Captains are independent operators responsible
-                    for licensing, insurance, safety, and vessel condition.
+                    <strong>Important:</strong> Lanchas is a marketplace. Captains are independent operators responsible for
+                    licensing, insurance, safety, and vessel condition.
                 </div>
             </section>
         </div>

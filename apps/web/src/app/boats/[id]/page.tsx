@@ -11,6 +11,7 @@ type BoatResponse = {
         maxPassengers: number;
         minimumHours: number;
         captain: { displayName: string };
+        photos?: Array<{ id: string; url: string }>;
         pricings: Array<{
             id: string;
             type: "PRIVATE_HOURLY" | "PER_PERSON";
@@ -46,6 +47,10 @@ export default async function BoatPage({ params }: { params: Promise<{ id: strin
             <div className={styles.meta}>
                 {b.captain.displayName} • {b.maxPassengers} pax • min {b.minimumHours}h
             </div>
+
+            {b.photos?.[0]?.url ? (
+                <img className={styles.heroImg} src={b.photos[0].url} alt={`${b.name} photo`} />
+            ) : null}
 
             <div className={styles.grid}>
                 <div className={styles.card}>

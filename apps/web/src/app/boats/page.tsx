@@ -8,6 +8,7 @@ type BoatsResponse = {
         name: string;
         maxPassengers: number;
         minimumHours: number;
+        photos?: Array<{ id: string; url: string }>;
         captain: { displayName: string };
         pricings: Array<{
             type: "PRIVATE_HOURLY" | "PER_PERSON";
@@ -32,6 +33,11 @@ export default async function BoatsPage() {
             <div className={styles.grid}>
                 {data.boats.map((b) => (
                     <a key={b.id} href={`/boats/${b.id}`} className={styles.card}>
+                        {b.photos?.[0]?.url ? (
+                            <img className={styles.thumb} src={b.photos[0].url} alt={`${b.name} photo`} />
+                        ) : (
+                            <div className={styles.thumbPlaceholder} aria-hidden="true" />
+                        )}
                         <div className={styles.title}>{b.name}</div>
                         <div className={styles.meta}>
                             {b.captain.displayName} • {b.maxPassengers} pax • min {b.minimumHours}h
