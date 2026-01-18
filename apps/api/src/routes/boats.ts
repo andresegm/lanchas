@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync } from "fastify";
-import { BoatPricingType, prisma } from "@lanchas/prisma";
+import { BoatPricingType, TripStatus, prisma } from "@lanchas/prisma";
 import { requireCaptain } from "../auth/guards.js";
 
 type CreatePricingBody = {
@@ -51,6 +51,43 @@ export const boatsRoutes: FastifyPluginAsync = async (app) => {
         if (!boat) throw app.httpErrors.notFound("Boat not found");
         return { boat };
     });
+
+    // Minimal availability for UI date picker:
+    // - Uses existing trips to block time windows
+    // - Returns a fixed horizon (default: next 30 days)
+    app.get<{ Params: { id: string }; Querystring: { from?: string; to?: string } }>(
+        "/boats/:id/availability",
+        async (req) => {
+            const boat = await prisma.boat.findUnique({
+                where: { id: req.params.id },
+                select: { id: true, minimumHours: true }
+            });
+            if (!boat) throw app.httpErrors.notFound("Boat not found");
+
+            const now = new Date();
+            const from = req.query.from ? new Date(req.query.from) : now;
+            const to = req.query.to ? new Date(req.query.to) : new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+            if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
+                throw app.httpErrors.badRequest("from/to must be ISO dates");
+            }
+            if (to <= from) throw app.httpErrors.badRequest("to must be after from");
+
+            const trips = await prisma.trip.findMany({
+                where: {
+                    boatId: boat.id,
+                    status: { in: [TripStatus.REQUESTED, TripStatus.ACCEPTED, TripStatus.ACTIVE, TripStatus.COMPLETED] },
+                    startAt: { lt: to },
+                    endAt: { gt: from }
+                },
+                select: { id: true, startAt: true, endAt: true, status: true }
+            });
+
+            return {
+                boat: { id: boat.id, minimumHours: boat.minimumHours },
+                blocked: trips
+            };
+        }
+    );
 
     app.post<{ Params: { id: string }; Body: CreatePricingBody }>("/boats/:id/pricing", async (req) => {
         const { captain } = await requireCaptain(app, req);

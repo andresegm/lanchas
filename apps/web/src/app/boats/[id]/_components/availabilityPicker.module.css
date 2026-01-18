@@ -1,0 +1,54 @@
+.wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.label {
+    font-size: 12px;
+    font-weight: 650;
+    color: rgba(15, 23, 42, 0.75);
+}
+
+.input {
+    width: 100%;
+    border: 1px solid rgba(15, 23, 42, 0.18);
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-size: 14px;
+    background: white;
+}
+
+.hint {
+    display: grid;
+    gap: 6px;
+    font-size: 13px;
+    color: rgba(15, 23, 42, 0.8);
+}
+
+.dim {
+    color: rgba(15, 23, 42, 0.55);
+}
+
+.error {
+    color: #b42318;
+    font-weight: 600;
+}
+
+@media (max-width: 700px) {
+    .row {
+        grid-template-columns: 1fr;
+    }
+}

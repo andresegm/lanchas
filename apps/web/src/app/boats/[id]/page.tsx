@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getApiBaseUrl } from "@/lib/apiBase";
 import styles from "./page.module.css";
 import { formatUsdFromCents } from "@/lib/money";
+import { AvailabilityPicker } from "./_components/AvailabilityPicker";
 
 type BoatResponse = {
     boat: {
@@ -65,14 +66,7 @@ export default async function BoatPage({ params }: { params: Promise<{ id: strin
                                 <input type="hidden" name="boatId" value={b.id} />
                                 <input type="hidden" name="pricingType" value="PRIVATE_HOURLY" />
 
-                                <label className={styles.label}>
-                                    <span>Start (ISO)</span>
-                                    <input className={styles.input} name="startAt" placeholder="2026-01-20T09:00:00-04:00" required />
-                                </label>
-                                <label className={styles.label}>
-                                    <span>End (ISO)</span>
-                                    <input className={styles.input} name="endAt" placeholder="2026-01-20T13:00:00-04:00" required />
-                                </label>
+                                <AvailabilityPicker boatId={b.id} />
                                 <label className={styles.label}>
                                     <span>Notes (optional)</span>
                                     <textarea className={styles.textarea} name="notes" rows={3} />

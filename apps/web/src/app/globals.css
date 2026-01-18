@@ -1,0 +1,19 @@
+/* Global styles and light third‑party overrides */
+
+/* React Datepicker: keep it visually consistent */
+.react-datepicker {
+    border: 1px solid rgba(15, 23, 42, 0.12) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 16px 40px rgba(2, 8, 23, 0.08) !important;
+    font-family: inherit !important;
+}
+
+.react-datepicker__header {
+    background: rgba(248, 250, 252, 0.9) !important;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08) !important;
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__time-list-item--selected {
+    background: #0b1220 !important;
+}

@@ -50,6 +50,9 @@ importers:
       react:
         specifier: ^19.0.0
         version: 19.2.3
+      react-datepicker:
+        specifier: ^7.6.0
+        version: 7.6.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react-dom:
         specifier: ^19.0.0
         version: 19.2.3(react@19.2.3)
@@ -273,6 +276,27 @@ packages:
 
   '@fastify/sensible@6.0.4':
     resolution: {integrity: sha512-1vxcCUlPMew6WroK8fq+LVOwbsLtX+lmuRuqpcp6eYqu6vmkLwbKTdBWAZwbeaSgCfW4tzUpTIHLLvTiQQ1BwQ==}
+
+  '@floating-ui/core@1.7.3':
+    resolution: {integrity: sha512-sGnvb5dmrJaKEZ+LDIpguvdX3bDlEllmv4/ClQ9awcmCZrlx5jQyyMWFM5kBI+EyNOCDDiKk8il0zeuX3Zlg/w==}
+
+  '@floating-ui/dom@1.7.4':
+    resolution: {integrity: sha512-OOchDgh4F2CchOX94cRVqhvy7b3AFb+/rQXyswmzmGakRfkMgoWVjfnLWkRirfLEfuD4ysVW16eXzwt3jHIzKA==}
+
+  '@floating-ui/react-dom@2.1.6':
+    resolution: {integrity: sha512-4JX6rEatQEvlmgU80wZyq9RT96HZJa88q8hp0pBd+LrczeDI4o6uA2M+uvxngVHo4Ihr8uibXxH6+70zhAFrVw==}
+    peerDependencies:
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+
+  '@floating-ui/react@0.27.16':
+    resolution: {integrity: sha512-9O8N4SeG2z++TSM8QA/KTeKFBVCNEz/AGS7gWPJf6KFRzmRWixFRnCnkPHRDwSVZW6QPDO6uT0P2SpWNKCc9/g==}
+    peerDependencies:
+      react: '>=17.0.0'
+      react-dom: '>=17.0.0'
+
+  '@floating-ui/utils@0.2.10':
+    resolution: {integrity: sha512-aGTxbpbg8/b5JfU1HXSrbH3wXZuLPJcNEcZQFMxLs3oSzgtVu6nFPkbbGGUvBcUjKV2YyB9Wxxabo+HEH9tcRQ==}
 
   '@img/colour@1.0.0':
     resolution: {integrity: sha512-A5P/LfWGFSl6nsckYtjw9da+19jB8hkJ6ACTGcDfEJ0aE+l2n2El7dsVM7UVHZQ9s2lmYMWlrS21YLy2IR1LUw==}
@@ -564,6 +588,10 @@ packages:
   client-only@0.0.1:
     resolution: {integrity: sha512-IV3Ou0jSMzZrd3pZ48nLkT9DA7Ag1pnPzaiQhpW7c3RbcqqzvzzVu+L8gfqMp/8IM2MQtSiqaCxrrcfu8I8rMA==}
 
+  clsx@2.1.1:
+    resolution: {integrity: sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==}
+    engines: {node: '>=6'}
+
   confbox@0.2.2:
     resolution: {integrity: sha512-1NB+BKqhtNipMsov4xI/NnhCKp9XG9NamYp5PVm9klAT0fsrNPjaFICsCFhNhwZJKNh7zB/3q8qXz0E9oaMNtQ==}
 
@@ -581,6 +609,9 @@ packages:
 
   csstype@3.2.3:
     resolution: {integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==}
+
+  date-fns@3.6.0:
+    resolution: {integrity: sha512-fRHTG8g/Gif+kSh50gaGEdToemgfj74aRX3swtiouboip5JDLAyDE9F11nHMIcvOaXeOC6D7SpNhi7uFyB7Uww==}
 
   deepmerge-ts@7.1.5:
     resolution: {integrity: sha512-HOJkrhaYsweh+W+e74Yn7YStZOilkoPb6fycpwNLKzSPtruFs48nYis0zy5yJz1+ktUhHxoRDJ27RQAWLIJVJw==}
@@ -825,6 +856,12 @@ packages:
   rc9@2.1.2:
     resolution: {integrity: sha512-btXCnMmRIBINM2LDZoEmOogIZU7Qe7zn4BpomSKZ/ykbLObuBdvG+mFq11DL6fjH1DRwHhrlgtYWG96bJiC7Cg==}
 
+  react-datepicker@7.6.0:
+    resolution: {integrity: sha512-9cQH6Z/qa4LrGhzdc3XoHbhrxNcMi9MKjZmYgF/1MNNaJwvdSjv3Xd+jjvrEEbKEf71ZgCA3n7fQbdwd70qCRw==}
+    peerDependencies:
+      react: ^16.9.0 || ^17 || ^18 || ^19 || ^19.0.0-rc
+      react-dom: ^16.9.0 || ^17 || ^18 || ^19 || ^19.0.0-rc
+
   react-dom@19.2.3:
     resolution: {integrity: sha512-yELu4WmLPw5Mr/lmeEpox5rw3RETacE++JgHqQzd2dg+YbJuat3jH4ingc+WPZhxaoFzdv9y33G+F7Nl5O0GBg==}
     peerDependencies:
@@ -924,6 +961,9 @@ packages:
         optional: true
       babel-plugin-macros:
         optional: true
+
+  tabbable@6.4.0:
+    resolution: {integrity: sha512-05PUHKSNE8ou2dwIxTngl4EzcnsCDZGJ/iCLtDflR/SHB/ny14rXc+qU5P4mG9JkusiV7EivzY9Mhm55AzAvCg==}
 
   thread-stream@4.0.0:
     resolution: {integrity: sha512-4iMVL6HAINXWf1ZKZjIPcz5wYaOdPhtO8ATvZ+Xqp3BTdaqtAwQkNmKORqcIo5YkQqGXq5cwfswDwMqqQNrpJA==}
@@ -1104,6 +1144,31 @@ snapshots:
       http-errors: 2.0.1
       type-is: 2.0.1
       vary: 1.1.2
+
+  '@floating-ui/core@1.7.3':
+    dependencies:
+      '@floating-ui/utils': 0.2.10
+
+  '@floating-ui/dom@1.7.4':
+    dependencies:
+      '@floating-ui/core': 1.7.3
+      '@floating-ui/utils': 0.2.10
+
+  '@floating-ui/react-dom@2.1.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
+    dependencies:
+      '@floating-ui/dom': 1.7.4
+      react: 19.2.3
+      react-dom: 19.2.3(react@19.2.3)
+
+  '@floating-ui/react@0.27.16(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
+    dependencies:
+      '@floating-ui/react-dom': 2.1.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@floating-ui/utils': 0.2.10
+      react: 19.2.3
+      react-dom: 19.2.3(react@19.2.3)
+      tabbable: 6.4.0
+
+  '@floating-ui/utils@0.2.10': {}
 
   '@img/colour@1.0.0':
     optional: true
@@ -1341,6 +1406,8 @@ snapshots:
 
   client-only@0.0.1: {}
 
+  clsx@2.1.1: {}
+
   confbox@0.2.2: {}
 
   consola@3.4.2: {}
@@ -1350,6 +1417,8 @@ snapshots:
   cookie@1.1.1: {}
 
   csstype@3.2.3: {}
+
+  date-fns@3.6.0: {}
 
   deepmerge-ts@7.1.5: {}
 
@@ -1641,6 +1710,14 @@ snapshots:
       defu: 6.1.4
       destr: 2.0.5
 
+  react-datepicker@7.6.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
+    dependencies:
+      '@floating-ui/react': 0.27.16(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      clsx: 2.1.1
+      date-fns: 3.6.0
+      react: 19.2.3
+      react-dom: 19.2.3(react@19.2.3)
+
   react-dom@19.2.3(react@19.2.3):
     dependencies:
       react: 19.2.3
@@ -1736,6 +1813,8 @@ snapshots:
     dependencies:
       client-only: 0.0.1
       react: 19.2.3
+
+  tabbable@6.4.0: {}
 
   thread-stream@4.0.0:
     dependencies:

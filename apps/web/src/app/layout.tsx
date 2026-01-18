@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 import { Inter } from "next/font/google";
+import "react-datepicker/dist/react-datepicker.css";
+import "./globals.css";
 import styles from "./layout.module.css";
 import { Nav } from "./_components/Nav";
 
