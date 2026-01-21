@@ -105,6 +105,43 @@ export default async function HomePage() {
 
             <section className={styles.section}>
                 <div className={styles.sectionHead}>
+                    <h2 className={styles.h2}>How it works</h2>
+                </div>
+
+                <div className={styles.howGrid}>
+                    <div className={styles.howCard}>
+                        <div className={styles.howTop}>
+                            <div className={styles.howNum}>1</div>
+                            <div className={styles.howTitle}>Browse boats</div>
+                        </div>
+                        <div className={styles.howBody}>Pick an island (destino), check photos, capacity, and hourly rates.</div>
+                    </div>
+                    <div className={styles.howCard}>
+                        <div className={styles.howTop}>
+                            <div className={styles.howNum}>2</div>
+                            <div className={styles.howTitle}>Request a time</div>
+                        </div>
+                        <div className={styles.howBody}>Choose your route and select an available start/end time on the calendar.</div>
+                    </div>
+                    <div className={styles.howCard}>
+                        <div className={styles.howTop}>
+                            <div className={styles.howNum}>3</div>
+                            <div className={styles.howTitle}>Captain confirms</div>
+                        </div>
+                        <div className={styles.howBody}>The captain accepts or rejects your request. You can track status in My Trips.</div>
+                    </div>
+                    <div className={styles.howCard}>
+                        <div className={styles.howTop}>
+                            <div className={styles.howNum}>4</div>
+                            <div className={styles.howTitle}>Pay & go</div>
+                        </div>
+                        <div className={styles.howBody}>Once accepted, complete payment (stub in V1), then enjoy your day on the water.</div>
+                    </div>
+                </div>
+            </section>
+
+            <section className={styles.section}>
+                <div className={styles.sectionHead}>
                     <h2 className={styles.h2}>Featured boats</h2>
                     <a className={styles.more} href="/boats">
                         See all

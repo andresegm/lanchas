@@ -131,6 +131,49 @@
     margin-top: 22px;
 }
 
+.howGrid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 12px;
+}
+
+.howCard {
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    padding: 14px 14px 16px;
+}
+
+.howTop {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.howNum {
+    width: 26px;
+    height: 26px;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.08);
+    font-weight: 900;
+}
+
+.howTitle {
+    font-weight: 900;
+    letter-spacing: -0.2px;
+}
+
+.howBody {
+    font-size: 13px;
+    line-height: 1.45;
+    opacity: 0.78;
+    font-weight: 600;
+}
+
 .sectionHead {
     display: flex;
     align-items: baseline;
@@ -256,6 +299,10 @@
     .grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+
+    .howGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 
 @media (max-width: 520px) {
@@ -272,6 +319,10 @@
     }
 
     .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .howGrid {
         grid-template-columns: 1fr;
     }
 }
