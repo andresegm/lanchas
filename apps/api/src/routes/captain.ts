@@ -31,6 +31,16 @@ type UpsertBoatRumboBody = {
     currency?: string;
 };
 
+type BulkBoatRumbosBody = {
+    currency?: string;
+    hourlyRateRUMBO_1?: number;
+    hourlyRateRUMBO_2?: number;
+    hourlyRateRUMBO_3?: number;
+    hourlyRateCentsRUMBO_1?: number;
+    hourlyRateCentsRUMBO_2?: number;
+    hourlyRateCentsRUMBO_3?: number;
+};
+
 export const captainRoutes: FastifyPluginAsync = async (app) => {
     app.get("/captain/me", async (req) => {
         const payload = await requireAuthed(app, req);
@@ -159,5 +169,55 @@ export const captainRoutes: FastifyPluginAsync = async (app) => {
         });
         return { pricing };
     });
+
+    // Bulk upsert all 3 rumbos in one request (captain UI).
+    // Any rumo with missing/<=0 rate will be deleted (treated as "not supported").
+    app.post<{ Params: { boatId: string }; Body: BulkBoatRumbosBody }>(
+        "/captain/boats/:boatId/rumbos/bulk",
+        async (req) => {
+            const { captain } = await requireCaptain(app, req);
+            const boat = await prisma.boat.findUnique({ where: { id: req.params.boatId }, select: { captainId: true } });
+            if (!boat) throw app.httpErrors.notFound("Boat not found");
+            if (boat.captainId !== captain.id) throw app.httpErrors.forbidden("Not your boat");
+
+            const currency = (req.body.currency?.trim() || "USD").toUpperCase();
+
+            const entries: Array<{
+                rumbo: Rumbo;
+                dollars?: unknown;
+                cents?: unknown;
+            }> = [
+                    { rumbo: Rumbo.RUMBO_1, dollars: req.body.hourlyRateRUMBO_1, cents: req.body.hourlyRateCentsRUMBO_1 },
+                    { rumbo: Rumbo.RUMBO_2, dollars: req.body.hourlyRateRUMBO_2, cents: req.body.hourlyRateCentsRUMBO_2 },
+                    { rumbo: Rumbo.RUMBO_3, dollars: req.body.hourlyRateRUMBO_3, cents: req.body.hourlyRateCentsRUMBO_3 }
+                ];
+
+            const ops = entries.map((e) => {
+                const rateCents =
+                    e.dollars !== undefined && e.dollars !== null && e.dollars !== ("" as any)
+                        ? dollarsToCents(e.dollars)
+                        : e.cents !== undefined && e.cents !== null && e.cents !== ("" as any)
+                            ? Math.round(Number(e.cents))
+                            : null;
+
+                if (!rateCents || rateCents <= 0) {
+                    return prisma.boatRumboPricing.deleteMany({ where: { boatId: req.params.boatId, rumbo: e.rumbo } });
+                }
+
+                return prisma.boatRumboPricing.upsert({
+                    where: { boatId_rumbo: { boatId: req.params.boatId, rumbo: e.rumbo } },
+                    update: { hourlyRateCents: rateCents, currency },
+                    create: { boatId: req.params.boatId, rumbo: e.rumbo, hourlyRateCents: rateCents, currency }
+                });
+            });
+
+            await prisma.$transaction(ops);
+            const rumboPricings = await prisma.boatRumboPricing.findMany({
+                where: { boatId: req.params.boatId },
+                orderBy: { rumbo: "asc" }
+            });
+            return { rumboPricings };
+        }
+    );
 };
 

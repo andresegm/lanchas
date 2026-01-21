@@ -42,7 +42,7 @@
 
 .search {
     display: grid;
-    grid-template-columns: 1.2fr auto 1fr auto 0.9fr auto 0.9fr auto;
+    grid-template-columns: 1.2fr auto 1fr auto 0.9fr auto 0.9fr auto auto;
     align-items: center;
     gap: 0;
     padding: 10px;
@@ -99,6 +99,7 @@
     color: white;
     font-weight: 800;
     cursor: pointer;
+    white-space: nowrap;
 }
 
 .chips {

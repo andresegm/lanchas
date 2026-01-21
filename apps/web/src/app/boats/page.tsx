@@ -41,15 +41,17 @@ const DESTINOS = [
 export default async function BoatsPage({
     searchParams
 }: {
-    searchParams?: Promise<{ rumbos?: string | string[]; destino?: string }>;
+    searchParams?: Promise<{ destino?: string; pax?: string; maxPrice?: string }>;
 }) {
     const apiBase = getApiBaseUrl() ?? "http://127.0.0.1:3001";
     const sp = (await searchParams) ?? {};
-    const rumbos = Array.isArray(sp.rumbos) ? sp.rumbos.join(",") : typeof sp.rumbos === "string" ? sp.rumbos : "";
     const destino = typeof sp.destino === "string" ? sp.destino : "";
+    const pax = typeof sp.pax === "string" ? sp.pax : "";
+    const maxPrice = typeof sp.maxPrice === "string" ? sp.maxPrice : "";
     const qs = new URLSearchParams();
-    if (rumbos) qs.set("rumbos", rumbos);
     if (destino) qs.set("destino", destino);
+    if (pax) qs.set("pax", pax);
+    if (maxPrice) qs.set("maxPrice", maxPrice);
 
     const res = await fetch(new URL(`/boats${qs.toString() ? `?${qs.toString()}` : ""}`, apiBase), { cache: "no-store" });
     const data = (await res.json()) as BoatsResponse;
@@ -57,26 +59,9 @@ export default async function BoatsPage({
     return (
         <div className={styles.wrap}>
             <h1 className={styles.h1}>Boats</h1>
-            <p className={styles.p}>Filter by rumbo (route) or destination, then request a day trip.</p>
+            <p className={styles.p}>Filter by island (destino), passengers, and max price per hour.</p>
 
             <form className={styles.filters} method="GET" action="/boats">
-                <div className={styles.filterGroup}>
-                    <div className={styles.filterLabel}>Rumbos</div>
-                    <div className={styles.filterRow}>
-                        <label className={styles.check}>
-                            <input type="checkbox" name="rumbos" value="RUMBO_1" defaultChecked={rumbos.includes("RUMBO_1")} />
-                            <span>Rumbo 1</span>
-                        </label>
-                        <label className={styles.check}>
-                            <input type="checkbox" name="rumbos" value="RUMBO_2" defaultChecked={rumbos.includes("RUMBO_2")} />
-                            <span>Rumbo 2</span>
-                        </label>
-                        <label className={styles.check}>
-                            <input type="checkbox" name="rumbos" value="RUMBO_3" defaultChecked={rumbos.includes("RUMBO_3")} />
-                            <span>Rumbo 3</span>
-                        </label>
-                    </div>
-                </div>
                 <div className={styles.filterGroup}>
                     <label className={styles.labelInline}>
                         <span className={styles.filterLabel}>Destino</span>
@@ -88,6 +73,18 @@ export default async function BoatsPage({
                                 </option>
                             ))}
                         </select>
+                    </label>
+                </div>
+                <div className={styles.filterGroup}>
+                    <label className={styles.labelInline}>
+                        <span className={styles.filterLabel}>Passengers</span>
+                        <input className={styles.select} name="pax" type="number" min={1} placeholder="6" defaultValue={pax} />
+                    </label>
+                </div>
+                <div className={styles.filterGroup}>
+                    <label className={styles.labelInline}>
+                        <span className={styles.filterLabel}>Max $/hr</span>
+                        <input className={styles.select} name="maxPrice" type="number" min={1} step={1} placeholder="120" defaultValue={maxPrice} />
                     </label>
                 </div>
                 <button className={styles.secondary} type="submit">

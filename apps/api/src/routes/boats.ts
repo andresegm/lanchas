@@ -55,7 +55,7 @@ export const boatsRoutes: FastifyPluginAsync = async (app) => {
         tigrillo: Rumbo.RUMBO_3
     };
 
-    app.get<{ Querystring: { rumbos?: unknown; destino?: string } }>("/boats", async (req) => {
+    app.get<{ Querystring: { rumbos?: unknown; destino?: string; pax?: unknown; maxPrice?: unknown } }>("/boats", async (req) => {
         const rumbosRaw = Array.isArray(req.query.rumbos) ? req.query.rumbos.join(",") : String(req.query.rumbos ?? "");
         const rumbos = (rumbosRaw ?? "")
             .split(",")
@@ -68,19 +68,29 @@ export const boatsRoutes: FastifyPluginAsync = async (app) => {
         const destinoRumbo = destino ? destinoToRumbo[destino] : undefined;
 
         const rumboFilter = destinoRumbo ? [destinoRumbo] : rumbos;
-        const where =
-            rumboFilter.length > 0
+
+        const pax = Array.isArray(req.query.pax) ? Number(req.query.pax[0]) : Number(req.query.pax ?? NaN);
+        const paxFilter = Number.isFinite(pax) && pax > 0 ? pax : null;
+
+        const maxPrice = Array.isArray(req.query.maxPrice) ? Number(req.query.maxPrice[0]) : Number(req.query.maxPrice ?? NaN);
+        const maxPriceCents = Number.isFinite(maxPrice) && maxPrice > 0 ? Math.round(maxPrice * 100) : null;
+
+        // Build a single "some" clause so destino/maxPrice combine on the same pricing row.
+        const someRumboPricing =
+            rumboFilter.length > 0 || maxPriceCents !== null
                 ? {
-                    rumboPricings: {
-                        some: {
-                            rumbo: { in: rumboFilter }
-                        }
-                    }
+                    ...(rumboFilter.length > 0 ? { rumbo: { in: rumboFilter } } : {}),
+                    ...(maxPriceCents !== null ? { hourlyRateCents: { lte: maxPriceCents } } : {})
                 }
-                : undefined;
+                : null;
+
+        const where: any = {
+            ...(paxFilter !== null ? { maxPassengers: { gte: paxFilter } } : {}),
+            ...(someRumboPricing ? { rumboPricings: { some: someRumboPricing } } : {})
+        };
 
         const boats = await prisma.boat.findMany({
-            where,
+            where: Object.keys(where).length ? where : undefined,
             include: {
                 captain: { select: { id: true, displayName: true } },
                 pricings: { where: { activeTo: null }, orderBy: { activeFrom: "desc" } },

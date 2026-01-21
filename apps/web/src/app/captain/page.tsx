@@ -180,41 +180,56 @@ export default async function CaptainPage({
                                                     Set the hourly rate for each route your boat supports. Leave blank to remove that rumbo.
                                                 </div>
 
-                                                {(["RUMBO_1", "RUMBO_2", "RUMBO_3"] as const).map((rumbo) => {
-                                                    const existing = b.rumboPricings.find((rp) => rp.rumbo === rumbo);
-                                                    const label =
-                                                        rumbo === "RUMBO_1"
-                                                            ? "Rumbo 1 (Las Borrachas, Puinare, El Faro, El Saco, Bahía del Silencio)"
-                                                            : rumbo === "RUMBO_2"
-                                                                ? "Rumbo 2 (Isla de Plata, Varadero, Punta la Cruz)"
-                                                                : "Rumbo 3 (Las Caracas, Playa Piscina, El Tigrillo)";
-
-                                                    return (
-                                                        <form
-                                                            key={rumbo}
-                                                            method="POST"
-                                                            action={`/api/captain/boats/${b.id}/rumbos`}
-                                                            className={styles.form}
-                                                        >
-                                                            <input type="hidden" name="rumbo" value={rumbo} />
-                                                            <label className={styles.label}>
-                                                                <span>{label}</span>
-                                                                <input
-                                                                    className={styles.input}
-                                                                    name="hourlyRate"
-                                                                    type="number"
-                                                                    min={0.01}
-                                                                    step={0.01}
-                                                                    placeholder="USD/hr"
-                                                                    defaultValue={existing ? (existing.hourlyRateCents / 100).toFixed(2) : ""}
-                                                                />
-                                                            </label>
-                                                            <button className={styles.secondary} type="submit">
-                                                                Save {rumbo}
-                                                            </button>
-                                                        </form>
-                                                    );
-                                                })}
+                                                <form method="POST" action={`/api/captain/boats/${b.id}/rumbos/bulk`} className={styles.form}>
+                                                    {(() => {
+                                                        const rp1 = b.rumboPricings.find((rp) => rp.rumbo === "RUMBO_1");
+                                                        const rp2 = b.rumboPricings.find((rp) => rp.rumbo === "RUMBO_2");
+                                                        const rp3 = b.rumboPricings.find((rp) => rp.rumbo === "RUMBO_3");
+                                                        return (
+                                                            <>
+                                                                <label className={styles.label}>
+                                                                    <span>Rumbo 1 (Las Borrachas, Puinare, El Faro, El Saco, Bahia del Silencio)</span>
+                                                                    <input
+                                                                        className={styles.input}
+                                                                        name="hourlyRateRUMBO_1"
+                                                                        type="number"
+                                                                        min={0.01}
+                                                                        step={0.01}
+                                                                        placeholder="USD/hr"
+                                                                        defaultValue={rp1 ? (rp1.hourlyRateCents / 100).toFixed(2) : ""}
+                                                                    />
+                                                                </label>
+                                                                <label className={styles.label}>
+                                                                    <span>Rumbo 2 (Isla de Plata, Varadero, Punta la Cruz)</span>
+                                                                    <input
+                                                                        className={styles.input}
+                                                                        name="hourlyRateRUMBO_2"
+                                                                        type="number"
+                                                                        min={0.01}
+                                                                        step={0.01}
+                                                                        placeholder="USD/hr"
+                                                                        defaultValue={rp2 ? (rp2.hourlyRateCents / 100).toFixed(2) : ""}
+                                                                    />
+                                                                </label>
+                                                                <label className={styles.label}>
+                                                                    <span>Rumbo 3 (Las Caracas, Playa Piscina, El Tigrillo)</span>
+                                                                    <input
+                                                                        className={styles.input}
+                                                                        name="hourlyRateRUMBO_3"
+                                                                        type="number"
+                                                                        min={0.01}
+                                                                        step={0.01}
+                                                                        placeholder="USD/hr"
+                                                                        defaultValue={rp3 ? (rp3.hourlyRateCents / 100).toFixed(2) : ""}
+                                                                    />
+                                                                </label>
+                                                                <button className={styles.secondary} type="submit">
+                                                                    Save rumbos pricing
+                                                                </button>
+                                                            </>
+                                                        );
+                                                    })()}
+                                                </form>
                                             </div>
                                         </div>
 

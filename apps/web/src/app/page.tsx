@@ -67,18 +67,13 @@ export default async function HomePage() {
                         </label>
                         <div className={styles.divider} />
                         <label className={styles.seg}>
-                            <div className={styles.segLabel}>Date</div>
-                            <input className={styles.input} name="date" type="date" />
-                        </label>
-                        <div className={styles.divider} />
-                        <label className={styles.seg}>
-                            <div className={styles.segLabel}>Hours</div>
-                            <input className={styles.input} name="hours" type="number" min={1} placeholder="4" />
-                        </label>
-                        <div className={styles.divider} />
-                        <label className={styles.seg}>
                             <div className={styles.segLabel}>Passengers</div>
                             <input className={styles.input} name="pax" type="number" min={1} placeholder="6" />
+                        </label>
+                        <div className={styles.divider} />
+                        <label className={styles.seg}>
+                            <div className={styles.segLabel}>Max $/hr</div>
+                            <input className={styles.input} name="maxPrice" type="number" min={1} step={1} placeholder="120" />
                         </label>
                         <button className={styles.searchBtn} type="submit">
                             Search
