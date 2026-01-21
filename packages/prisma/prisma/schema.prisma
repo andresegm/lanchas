@@ -18,6 +18,12 @@ enum BoatPricingType {
   PER_PERSON
 }
 
+enum Rumbo {
+  RUMBO_1
+  RUMBO_2
+  RUMBO_3
+}
+
 enum TripStatus {
   REQUESTED
   ACCEPTED
@@ -102,10 +108,27 @@ model Boat {
 
   captain  Captain      @relation(fields: [captainId], references: [id], onDelete: Cascade)
   pricings BoatPricing[]
+  rumboPricings BoatRumboPricing[]
   photos   BoatPhoto[]
   trips    Trip[]
 
   @@index([captainId])
+}
+
+model BoatRumboPricing {
+  id             String   @id @default(cuid())
+  boatId         String
+  rumbo          Rumbo
+  currency       String   @default("USD")
+  hourlyRateCents Int
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  boat Boat @relation(fields: [boatId], references: [id], onDelete: Cascade)
+
+  @@unique([boatId, rumbo])
+  @@index([boatId])
+  @@index([rumbo])
 }
 
 model BoatPhoto {

@@ -13,6 +13,12 @@ type BoatResponse = {
         minimumHours: number;
         captain: { displayName: string };
         photos?: Array<{ id: string; url: string }>;
+        rumboPricings: Array<{
+            id: string;
+            rumbo: "RUMBO_1" | "RUMBO_2" | "RUMBO_3";
+            currency: string;
+            hourlyRateCents: number;
+        }>;
         pricings: Array<{
             id: string;
             type: "PRIVATE_HOURLY" | "PER_PERSON";
@@ -23,6 +29,12 @@ type BoatResponse = {
         }>;
     };
 };
+
+function rumboLabel(r: "RUMBO_1" | "RUMBO_2" | "RUMBO_3") {
+    if (r === "RUMBO_1") return "Rumbo 1";
+    if (r === "RUMBO_2") return "Rumbo 2";
+    return "Rumbo 3";
+}
 
 async function loadBoat(id: string): Promise<BoatResponse> {
     const apiBase = getApiBaseUrl() ?? "http://127.0.0.1:3001";
@@ -35,8 +47,6 @@ export default async function BoatPage({ params }: { params: Promise<{ id: strin
     const { id } = await params;
     const data = await loadBoat(id);
     const b = data.boat;
-
-    const privatePricing = b.pricings.find((p) => p.type === "PRIVATE_HOURLY");
 
     return (
         <div className={styles.wrap}>
@@ -56,15 +66,32 @@ export default async function BoatPage({ params }: { params: Promise<{ id: strin
             <div className={styles.grid}>
                 <div className={styles.card}>
                     <h2 className={styles.h2}>Request a trip</h2>
-                    {privatePricing ? (
+                    {b.rumboPricings.length ? (
                         <>
                             <div className={styles.priceLine}>
-                                {formatUsdFromCents(privatePricing.privateHourlyRateCents)} {privatePricing.currency}/hr • min{" "}
-                                {privatePricing.minimumTripDurationHours}h
+                                {(() => {
+                                    const min = Math.min(...b.rumboPricings.map((p) => p.hourlyRateCents));
+                                    const cur = b.rumboPricings[0]?.currency ?? "USD";
+                                    return `From ${formatUsdFromCents(min)} ${cur}/hr • min ${b.minimumHours}h`;
+                                })()}
                             </div>
                             <form method="POST" action="/api/trips/create" className={styles.form}>
                                 <input type="hidden" name="boatId" value={b.id} />
                                 <input type="hidden" name="pricingType" value="PRIVATE_HOURLY" />
+
+                                <label className={styles.label}>
+                                    <span>Rumbo (route)</span>
+                                    <select className={styles.input} name="rumbo" required defaultValue="">
+                                        <option value="" disabled>
+                                            Select a rumbo
+                                        </option>
+                                        {b.rumboPricings.map((p) => (
+                                            <option key={p.id} value={p.rumbo}>
+                                                {rumboLabel(p.rumbo)} — {formatUsdFromCents(p.hourlyRateCents)} {p.currency}/hr
+                                            </option>
+                                        ))}
+                                    </select>
+                                </label>
 
                                 <AvailabilityPicker boatId={b.id} />
                                 <label className={styles.label}>
@@ -77,7 +104,7 @@ export default async function BoatPage({ params }: { params: Promise<{ id: strin
                             </form>
                         </>
                     ) : (
-                        <p className={styles.dim}>No private pricing configured.</p>
+                        <p className={styles.dim}>This boat has no rumbos pricing configured yet.</p>
                     )}
                 </div>
             </div>

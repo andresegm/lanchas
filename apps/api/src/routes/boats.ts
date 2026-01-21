@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync } from "fastify";
-import { BoatPricingType, TripStatus, prisma } from "@lanchas/prisma";
+import { BoatPricingType, Rumbo, TripStatus, prisma } from "@lanchas/prisma";
 import { requireCaptain } from "../auth/guards.js";
 
 type CreatePricingBody = {
@@ -27,11 +27,64 @@ function pickRateCents(opts: { dollars?: unknown; cents?: unknown }) {
 }
 
 export const boatsRoutes: FastifyPluginAsync = async (app) => {
-    app.get("/boats", async () => {
+    const destinoToRumbo: Record<string, Rumbo> = {
+        // Rumbo 1
+        "las borrachas": Rumbo.RUMBO_1,
+        borrachas: Rumbo.RUMBO_1,
+        puinare: Rumbo.RUMBO_1,
+        "el faro": Rumbo.RUMBO_1,
+        faro: Rumbo.RUMBO_1,
+        "el saco": Rumbo.RUMBO_1,
+        saco: Rumbo.RUMBO_1,
+        "bahia del silencio": Rumbo.RUMBO_1,
+        "la bahia del silencio": Rumbo.RUMBO_1,
+        silencio: Rumbo.RUMBO_1,
+
+        // Rumbo 2
+        "isla de plata": Rumbo.RUMBO_2,
+        "plata": Rumbo.RUMBO_2,
+        varadero: Rumbo.RUMBO_2,
+        "punta la cruz": Rumbo.RUMBO_2,
+
+        // Rumbo 3
+        "las caracas": Rumbo.RUMBO_3,
+        caracas: Rumbo.RUMBO_3,
+        "playa piscina": Rumbo.RUMBO_3,
+        piscina: Rumbo.RUMBO_3,
+        "el tigrillo": Rumbo.RUMBO_3,
+        tigrillo: Rumbo.RUMBO_3
+    };
+
+    app.get<{ Querystring: { rumbos?: unknown; destino?: string } }>("/boats", async (req) => {
+        const rumbosRaw = Array.isArray(req.query.rumbos) ? req.query.rumbos.join(",") : String(req.query.rumbos ?? "");
+        const rumbos = (rumbosRaw ?? "")
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+            .filter((s): s is keyof typeof Rumbo => s in Rumbo)
+            .map((s) => Rumbo[s]);
+
+        const destino = (req.query.destino ?? "").trim().toLowerCase();
+        const destinoRumbo = destino ? destinoToRumbo[destino] : undefined;
+
+        const rumboFilter = destinoRumbo ? [destinoRumbo] : rumbos;
+        const where =
+            rumboFilter.length > 0
+                ? {
+                    rumboPricings: {
+                        some: {
+                            rumbo: { in: rumboFilter }
+                        }
+                    }
+                }
+                : undefined;
+
         const boats = await prisma.boat.findMany({
+            where,
             include: {
                 captain: { select: { id: true, displayName: true } },
                 pricings: { where: { activeTo: null }, orderBy: { activeFrom: "desc" } },
+                rumboPricings: { orderBy: { rumbo: "asc" } },
                 photos: { orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }], take: 5 }
             },
             orderBy: { createdAt: "desc" }
@@ -45,6 +98,7 @@ export const boatsRoutes: FastifyPluginAsync = async (app) => {
             include: {
                 captain: { select: { id: true, displayName: true } },
                 pricings: { where: { activeTo: null }, orderBy: { activeFrom: "desc" } },
+                rumboPricings: { orderBy: { rumbo: "asc" } },
                 photos: { orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }], take: 20 }
             }
         });

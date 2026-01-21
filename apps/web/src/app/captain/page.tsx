@@ -16,6 +16,12 @@ type CaptainMe = {
             maxPassengers: number;
             minimumHours: number;
             photos: Array<{ id: string; url: string; sortOrder: number }>;
+            rumboPricings: Array<{
+                id: string;
+                rumbo: "RUMBO_1" | "RUMBO_2" | "RUMBO_3";
+                currency: string;
+                hourlyRateCents: number;
+            }>;
             pricings: Array<{
                 id: string;
                 type: "PRIVATE_HOURLY" | "PER_PERSON";
@@ -169,40 +175,63 @@ export default async function CaptainPage({
 
                                         <div className={styles.pricingGrid}>
                                             <div>
-                                                <h3 className={styles.h3}>Private hourly</h3>
-                                                <form method="POST" action={`/api/boats/${b.id}/pricing`} className={styles.form}>
-                                                    <input type="hidden" name="type" value="PRIVATE_HOURLY" />
-                                                    <label className={styles.label}>
-                                                        <span>Rate (USD)</span>
-                                                        <input className={styles.input} name="privateHourlyRate" type="number" min={0.01} step={0.01} required />
-                                                    </label>
-                                                    <label className={styles.label}>
-                                                        <span>Min trip duration (hours)</span>
-                                                        <input className={styles.input} name="minimumTripDurationHours" type="number" min={1} required />
-                                                    </label>
-                                                    <button className={styles.secondary} type="submit">
-                                                        Set pricing
-                                                    </button>
-                                                </form>
+                                                <h3 className={styles.h3}>Rumbos pricing (per hour)</h3>
+                                                <div className={styles.p}>
+                                                    Set the hourly rate for each route your boat supports. Leave blank to remove that rumbo.
+                                                </div>
+
+                                                {(["RUMBO_1", "RUMBO_2", "RUMBO_3"] as const).map((rumbo) => {
+                                                    const existing = b.rumboPricings.find((rp) => rp.rumbo === rumbo);
+                                                    const label =
+                                                        rumbo === "RUMBO_1"
+                                                            ? "Rumbo 1 (Las Borrachas, Puinare, El Faro, El Saco, Bahía del Silencio)"
+                                                            : rumbo === "RUMBO_2"
+                                                                ? "Rumbo 2 (Isla de Plata, Varadero, Punta la Cruz)"
+                                                                : "Rumbo 3 (Las Caracas, Playa Piscina, El Tigrillo)";
+
+                                                    return (
+                                                        <form
+                                                            key={rumbo}
+                                                            method="POST"
+                                                            action={`/api/captain/boats/${b.id}/rumbos`}
+                                                            className={styles.form}
+                                                        >
+                                                            <input type="hidden" name="rumbo" value={rumbo} />
+                                                            <label className={styles.label}>
+                                                                <span>{label}</span>
+                                                                <input
+                                                                    className={styles.input}
+                                                                    name="hourlyRate"
+                                                                    type="number"
+                                                                    min={0.01}
+                                                                    step={0.01}
+                                                                    placeholder="USD/hr"
+                                                                    defaultValue={existing ? (existing.hourlyRateCents / 100).toFixed(2) : ""}
+                                                                />
+                                                            </label>
+                                                            <button className={styles.secondary} type="submit">
+                                                                Save {rumbo}
+                                                            </button>
+                                                        </form>
+                                                    );
+                                                })}
                                             </div>
                                         </div>
 
-                                        {b.pricings.some((p) => p.type === "PRIVATE_HOURLY") ? (
+                                        {b.rumboPricings.length > 0 ? (
                                             <div className={styles.current}>
-                                                <div className={styles.k}>Active pricing</div>
+                                                <div className={styles.k}>Active rumbos</div>
                                                 <ul className={styles.ul}>
-                                                    {b.pricings
-                                                        .filter((p) => p.type === "PRIVATE_HOURLY")
-                                                        .map((p) => (
-                                                            <li key={p.id}>
-                                                                <strong>{p.type}</strong> —{" "}
-                                                                {`${formatUsdFromCents(p.privateHourlyRateCents)} ${p.currency}/hr`} (min{" "}
-                                                                {p.minimumTripDurationHours}h)
-                                                            </li>
-                                                        ))}
+                                                    {b.rumboPricings.map((p) => (
+                                                        <li key={p.id}>
+                                                            <strong>{p.rumbo}</strong> — {formatUsdFromCents(p.hourlyRateCents)} {p.currency}/hr
+                                                        </li>
+                                                    ))}
                                                 </ul>
                                             </div>
-                                        ) : null}
+                                        ) : (
+                                            <div className={styles.dim}>No rumbos configured yet.</div>
+                                        )}
                                     </div>
                                 ))}
                             </div>

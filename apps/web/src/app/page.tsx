@@ -8,15 +8,15 @@ type BoatsResponse = {
         name: string;
         captain: { displayName: string };
         photos?: Array<{ id: string; url: string }>;
-        pricings: Array<{
-            type: "PRIVATE_HOURLY" | "PER_PERSON";
+        rumboPricings: Array<{
+            rumbo: "RUMBO_1" | "RUMBO_2" | "RUMBO_3";
             currency: string;
-            privateHourlyRateCents: number | null;
+            hourlyRateCents: number;
         }>;
     }>;
 };
 
-async function fetchFeaturedBoats() {
+async function fetchFeaturedBoats(): Promise<BoatsResponse["boats"]> {
     const apiBase = getApiBaseUrl();
     if (!apiBase) return [];
     try {
@@ -49,6 +49,24 @@ export default async function HomePage() {
                         </div>
                         <div className={styles.divider} />
                         <label className={styles.seg}>
+                            <div className={styles.segLabel}>Destino</div>
+                            <select className={styles.input} name="destino" defaultValue="">
+                                <option value="">Any</option>
+                                <option value="Las Borrachas">Las Borrachas</option>
+                                <option value="Puinare">Puinare</option>
+                                <option value="El Faro">El Faro</option>
+                                <option value="El Saco">El Saco</option>
+                                <option value="Bahia del Silencio">Bahia del Silencio</option>
+                                <option value="Isla de Plata">Isla de Plata</option>
+                                <option value="Varadero">Varadero</option>
+                                <option value="Punta la Cruz">Punta la Cruz</option>
+                                <option value="Las Caracas">Las Caracas</option>
+                                <option value="Playa Piscina">Playa Piscina</option>
+                                <option value="El Tigrillo">El Tigrillo</option>
+                            </select>
+                        </label>
+                        <div className={styles.divider} />
+                        <label className={styles.seg}>
                             <div className={styles.segLabel}>Date</div>
                             <input className={styles.input} name="date" type="date" />
                         </label>
@@ -71,8 +89,11 @@ export default async function HomePage() {
                         <a className={styles.chip} href="/boats">
                             Popular
                         </a>
-                        <a className={styles.chip} href="/boats">
-                            Islands
+                        <a className={styles.chip} href="/boats?destino=Las%20Borrachas">
+                            Las Borrachas
+                        </a>
+                        <a className={styles.chip} href="/boats?destino=Isla%20de%20Plata">
+                            Isla de Plata
                         </a>
                         <a className={styles.chip} href="/boats">
                             Family-friendly
@@ -109,9 +130,10 @@ export default async function HomePage() {
                                     <div className={styles.cardMeta}>{b.captain.displayName}</div>
                                     <div className={styles.cardMeta}>
                                         {(() => {
-                                            const p = b.pricings.find((x: { type: string }) => x.type === "PRIVATE_HOURLY");
-                                            if (!p) return "Hourly rate not set";
-                                            return `${formatUsdFromCents(p.privateHourlyRateCents)} ${p.currency}/hr`;
+                                            if (!b.rumboPricings?.length) return "Hourly rate not set";
+                                            const min = Math.min(...b.rumboPricings.map((x: BoatsResponse["boats"][number]["rumboPricings"][number]) => x.hourlyRateCents));
+                                            const cur = b.rumboPricings[0]?.currency ?? "USD";
+                                            return `From ${formatUsdFromCents(min)} ${cur}/hr`;
                                         })()}
                                     </div>
                                 </div>

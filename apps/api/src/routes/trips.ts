@@ -1,10 +1,11 @@
 import type { FastifyPluginAsync } from "fastify";
-import { IncidentType, PaymentStatus, ReviewTargetType, TripStatus, prisma } from "@lanchas/prisma";
+import { IncidentType, PaymentStatus, ReviewTargetType, Rumbo, TripStatus, prisma } from "@lanchas/prisma";
 import { requireAuthed, requireCaptain } from "../auth/guards.js";
 
 type CreateTripBody = {
     boatId?: string;
     pricingType?: "PRIVATE_HOURLY";
+    rumbo?: string;
     startAt?: string;
     endAt?: string;
     notes?: string;
@@ -54,6 +55,10 @@ export const tripsRoutes: FastifyPluginAsync = async (app) => {
         const pricingType = req.body.pricingType;
         if (pricingType !== "PRIVATE_HOURLY") throw app.httpErrors.badRequest("Only PRIVATE_HOURLY is supported for now");
 
+        const rumboKey = req.body.rumbo;
+        if (!rumboKey || !(rumboKey in Rumbo)) throw app.httpErrors.badRequest("rumbo is required");
+        const rumbo = Rumbo[rumboKey as keyof typeof Rumbo];
+
         const startAt = parseDateIso(req.body.startAt);
         const endAt = parseDateIso(req.body.endAt);
         if (!startAt || !endAt) throw app.httpErrors.badRequest("startAt and endAt are required (ISO strings)");
@@ -65,24 +70,23 @@ export const tripsRoutes: FastifyPluginAsync = async (app) => {
         });
         if (!boat) throw app.httpErrors.notFound("Boat not found");
 
-        const activePricing = await prisma.boatPricing.findFirst({
-            where: { boatId, type: "PRIVATE_HOURLY" as any, activeTo: null },
-            orderBy: { activeFrom: "desc" }
+        const rumboPricing = await prisma.boatRumboPricing.findUnique({
+            where: { boatId_rumbo: { boatId, rumbo } }
         });
-        if (!activePricing) throw app.httpErrors.badRequest("Boat has no active pricing for this type");
+        if (!rumboPricing) throw app.httpErrors.badRequest("Boat does not support that rumbo");
 
         const hours = durationHoursCeil(startAt, endAt);
-        const minHours = Math.max(boat.minimumHours, activePricing.minimumTripDurationHours);
+        const minHours = boat.minimumHours;
         if (hours < minHours) throw app.httpErrors.badRequest(`Trip must be at least ${minHours} hours`);
 
         const snapshot = {
             type: "PRIVATE_HOURLY",
-            currency: activePricing.currency,
-            privateHourlyRateCents: activePricing.privateHourlyRateCents,
-            minimumTripDurationHours: activePricing.minimumTripDurationHours
+            rumbo,
+            currency: rumboPricing.currency,
+            hourlyRateCents: rumboPricing.hourlyRateCents
         };
 
-        const baseSubtotal = (activePricing.privateHourlyRateCents ?? 0) * hours;
+        const baseSubtotal = rumboPricing.hourlyRateCents * hours;
 
         const commissionRate = 0.18;
         const commissionCents = Math.round(baseSubtotal * commissionRate);
@@ -101,7 +105,7 @@ export const tripsRoutes: FastifyPluginAsync = async (app) => {
                 commissionRate,
                 commissionCents,
                 totalCents,
-                currency: activePricing.currency,
+                currency: rumboPricing.currency,
                 participants: { create: { userId: payload.sub } }
             },
             include: { participants: true }

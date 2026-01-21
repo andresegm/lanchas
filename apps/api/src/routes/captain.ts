@@ -1,8 +1,9 @@
 import type { FastifyPluginAsync } from "fastify";
-import { prisma, type UserRole } from "@lanchas/prisma";
+import { Rumbo, prisma, type UserRole } from "@lanchas/prisma";
 import { requireAuthed, requireCaptain, upgradedRoleForCaptain } from "../auth/guards.js";
 import { setAccessCookie } from "../auth/cookies.js";
 import { signAccessToken } from "../auth/jwt.js";
+import { dollarsToCents } from "../money.js";
 
 type CreateCaptainBody = {
     displayName?: string;
@@ -23,6 +24,13 @@ type AddBoatPhotoBody = {
     sortOrder?: number;
 };
 
+type UpsertBoatRumboBody = {
+    rumbo?: string;
+    hourlyRate?: number; // dollars
+    hourlyRateCents?: number; // back-compat
+    currency?: string;
+};
+
 export const captainRoutes: FastifyPluginAsync = async (app) => {
     app.get("/captain/me", async (req) => {
         const payload = await requireAuthed(app, req);
@@ -32,6 +40,7 @@ export const captainRoutes: FastifyPluginAsync = async (app) => {
                 boats: {
                     include: {
                         pricings: { where: { activeTo: null }, orderBy: { activeFrom: "desc" } },
+                        rumboPricings: { orderBy: { rumbo: "asc" } },
                         photos: { orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }], take: 20 }
                     },
                     orderBy: { createdAt: "desc" }
@@ -115,6 +124,40 @@ export const captainRoutes: FastifyPluginAsync = async (app) => {
             data: { boatId: req.params.boatId, url, sortOrder }
         });
         return { photo };
+    });
+
+    // Upsert or remove a boat's per-rumbo hourly pricing.
+    // - If hourlyRate/hourlyRateCents is missing/<=0 -> remove the rumbo (unsupported)
+    // - Otherwise upsert the rate
+    app.post<{ Params: { boatId: string }; Body: UpsertBoatRumboBody }>("/captain/boats/:boatId/rumbos", async (req) => {
+        const { captain } = await requireCaptain(app, req);
+        const boat = await prisma.boat.findUnique({ where: { id: req.params.boatId }, select: { captainId: true } });
+        if (!boat) throw app.httpErrors.notFound("Boat not found");
+        if (boat.captainId !== captain.id) throw app.httpErrors.forbidden("Not your boat");
+
+        const rumboKey = req.body.rumbo;
+        if (!rumboKey || !(rumboKey in Rumbo)) throw app.httpErrors.badRequest("rumbo is required");
+        const rumbo = Rumbo[rumboKey as keyof typeof Rumbo];
+
+        const currency = (req.body.currency?.trim() || "USD").toUpperCase();
+        const rateCents =
+            req.body.hourlyRate !== undefined && req.body.hourlyRate !== null && req.body.hourlyRate !== ("" as any)
+                ? dollarsToCents(req.body.hourlyRate)
+                : req.body.hourlyRateCents !== undefined && req.body.hourlyRateCents !== null && req.body.hourlyRateCents !== ("" as any)
+                    ? Math.round(Number(req.body.hourlyRateCents))
+                    : null;
+
+        if (!rateCents || rateCents <= 0) {
+            await prisma.boatRumboPricing.deleteMany({ where: { boatId: req.params.boatId, rumbo } });
+            return { removed: true };
+        }
+
+        const pricing = await prisma.boatRumboPricing.upsert({
+            where: { boatId_rumbo: { boatId: req.params.boatId, rumbo } },
+            update: { hourlyRateCents: rateCents, currency },
+            create: { boatId: req.params.boatId, rumbo, hourlyRateCents: rateCents, currency }
+        });
+        return { pricing };
     });
 };
 
