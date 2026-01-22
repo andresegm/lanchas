@@ -42,7 +42,7 @@
 
 .search {
     display: grid;
-    grid-template-columns: 1.2fr auto 1fr auto 0.9fr auto 0.9fr auto auto;
+    grid-template-columns: 1fr auto 0.7fr auto 0.7fr auto 0.6fr auto 0.7fr auto 0.9fr auto auto;
     align-items: center;
     gap: 0;
     padding: 10px;
@@ -50,7 +50,8 @@
     border: 1px solid rgba(15, 23, 42, 0.12);
     background: rgba(255, 255, 255, 0.92);
     box-shadow: 0 10px 30px rgba(2, 8, 23, 0.06);
-    max-width: 980px;
+    width: 100%;
+    max-width: 1120px;
 }
 
 .seg {
@@ -58,6 +59,11 @@
     gap: 4px;
     padding: 10px 14px;
     min-width: 0;
+    overflow: hidden;
+}
+
+.segTight {
+    padding: 8px 10px;
 }
 
 .segLabel {
@@ -81,6 +87,10 @@
     font: inherit;
     opacity: 0.9;
     background: transparent;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    display: block;
 }
 
 .divider {

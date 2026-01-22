@@ -41,17 +41,33 @@ const DESTINOS = [
 export default async function BoatsPage({
     searchParams
 }: {
-    searchParams?: Promise<{ destino?: string; pax?: string; maxPrice?: string }>;
+    searchParams?: Promise<{ destino?: string; pax?: string; maxPrice?: string; date?: string; startTime?: string; hours?: string }>;
 }) {
     const apiBase = getApiBaseUrl() ?? "http://127.0.0.1:3001";
     const sp = (await searchParams) ?? {};
     const destino = typeof sp.destino === "string" ? sp.destino : "";
     const pax = typeof sp.pax === "string" ? sp.pax : "";
     const maxPrice = typeof sp.maxPrice === "string" ? sp.maxPrice : "";
+    const date = typeof sp.date === "string" ? sp.date : "";
+    const startTime = typeof sp.startTime === "string" ? sp.startTime : "";
+    const hours = typeof sp.hours === "string" ? sp.hours : "";
     const qs = new URLSearchParams();
     if (destino) qs.set("destino", destino);
     if (pax) qs.set("pax", pax);
     if (maxPrice) qs.set("maxPrice", maxPrice);
+
+    // If date + startTime + hours provided, convert to ISO window (America/Caracas is UTC-4).
+    // We send startAt/endAt to API for filtering out already-booked boats.
+    const tzOffset = "-04:00";
+    const hoursNum = Number(hours);
+    if (date && startTime && Number.isFinite(hoursNum) && hoursNum > 0) {
+        const startAt = new Date(`${date}T${startTime}:00${tzOffset}`);
+        const endAt = new Date(startAt.getTime() + hoursNum * 60 * 60 * 1000);
+        if (!Number.isNaN(startAt.getTime()) && !Number.isNaN(endAt.getTime())) {
+            qs.set("startAt", startAt.toISOString());
+            qs.set("endAt", endAt.toISOString());
+        }
+    }
 
     const res = await fetch(new URL(`/boats${qs.toString() ? `?${qs.toString()}` : ""}`, apiBase), { cache: "no-store" });
     const data = (await res.json()) as BoatsResponse;
@@ -79,6 +95,24 @@ export default async function BoatsPage({
                     <label className={styles.labelInline}>
                         <span className={styles.filterLabel}>Passengers</span>
                         <input className={styles.select} name="pax" type="number" min={1} placeholder="6" defaultValue={pax} />
+                    </label>
+                </div>
+                <div className={styles.filterGroup}>
+                    <label className={styles.labelInline}>
+                        <span className={styles.filterLabel}>Date</span>
+                        <input className={styles.select} name="date" type="date" defaultValue={date} />
+                    </label>
+                </div>
+                <div className={styles.filterGroup}>
+                    <label className={styles.labelInline}>
+                        <span className={styles.filterLabel}>Start time</span>
+                        <input className={styles.select} name="startTime" type="time" defaultValue={startTime} />
+                    </label>
+                </div>
+                <div className={styles.filterGroup}>
+                    <label className={styles.labelInline}>
+                        <span className={styles.filterLabel}>Hours</span>
+                        <input className={styles.select} name="hours" type="number" min={1} step={1} placeholder="4" defaultValue={hours} />
                     </label>
                 </div>
                 <div className={styles.filterGroup}>

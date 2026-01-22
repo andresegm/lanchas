@@ -55,52 +55,75 @@ export const boatsRoutes: FastifyPluginAsync = async (app) => {
         tigrillo: Rumbo.RUMBO_3
     };
 
-    app.get<{ Querystring: { rumbos?: unknown; destino?: string; pax?: unknown; maxPrice?: unknown } }>("/boats", async (req) => {
-        const rumbosRaw = Array.isArray(req.query.rumbos) ? req.query.rumbos.join(",") : String(req.query.rumbos ?? "");
-        const rumbos = (rumbosRaw ?? "")
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean)
-            .filter((s): s is keyof typeof Rumbo => s in Rumbo)
-            .map((s) => Rumbo[s]);
+    app.get<{ Querystring: { rumbos?: unknown; destino?: string; pax?: unknown; maxPrice?: unknown; startAt?: string; endAt?: string } }>(
+        "/boats",
+        async (req) => {
+            const rumbosRaw = Array.isArray(req.query.rumbos) ? req.query.rumbos.join(",") : String(req.query.rumbos ?? "");
+            const rumbos = (rumbosRaw ?? "")
+                .split(",")
+                .map((s) => s.trim())
+                .filter(Boolean)
+                .filter((s): s is keyof typeof Rumbo => s in Rumbo)
+                .map((s) => Rumbo[s]);
 
-        const destino = (req.query.destino ?? "").trim().toLowerCase();
-        const destinoRumbo = destino ? destinoToRumbo[destino] : undefined;
+            const destino = (req.query.destino ?? "").trim().toLowerCase();
+            const destinoRumbo = destino ? destinoToRumbo[destino] : undefined;
 
-        const rumboFilter = destinoRumbo ? [destinoRumbo] : rumbos;
+            const rumboFilter = destinoRumbo ? [destinoRumbo] : rumbos;
 
-        const pax = Array.isArray(req.query.pax) ? Number(req.query.pax[0]) : Number(req.query.pax ?? NaN);
-        const paxFilter = Number.isFinite(pax) && pax > 0 ? pax : null;
+            const pax = Array.isArray(req.query.pax) ? Number(req.query.pax[0]) : Number(req.query.pax ?? NaN);
+            const paxFilter = Number.isFinite(pax) && pax > 0 ? pax : null;
 
-        const maxPrice = Array.isArray(req.query.maxPrice) ? Number(req.query.maxPrice[0]) : Number(req.query.maxPrice ?? NaN);
-        const maxPriceCents = Number.isFinite(maxPrice) && maxPrice > 0 ? Math.round(maxPrice * 100) : null;
+            const maxPrice = Array.isArray(req.query.maxPrice) ? Number(req.query.maxPrice[0]) : Number(req.query.maxPrice ?? NaN);
+            const maxPriceCents = Number.isFinite(maxPrice) && maxPrice > 0 ? Math.round(maxPrice * 100) : null;
 
-        // Build a single "some" clause so destino/maxPrice combine on the same pricing row.
-        const someRumboPricing =
-            rumboFilter.length > 0 || maxPriceCents !== null
-                ? {
-                    ...(rumboFilter.length > 0 ? { rumbo: { in: rumboFilter } } : {}),
-                    ...(maxPriceCents !== null ? { hourlyRateCents: { lte: maxPriceCents } } : {})
-                }
-                : null;
+            // Build a single "some" clause so destino/maxPrice combine on the same pricing row.
+            const someRumboPricing =
+                rumboFilter.length > 0 || maxPriceCents !== null
+                    ? {
+                        ...(rumboFilter.length > 0 ? { rumbo: { in: rumboFilter } } : {}),
+                        ...(maxPriceCents !== null ? { hourlyRateCents: { lte: maxPriceCents } } : {})
+                    }
+                    : null;
 
-        const where: any = {
-            ...(paxFilter !== null ? { maxPassengers: { gte: paxFilter } } : {}),
-            ...(someRumboPricing ? { rumboPricings: { some: someRumboPricing } } : {})
-        };
+            const startAt = req.query.startAt ? new Date(req.query.startAt) : null;
+            const endAt = req.query.endAt ? new Date(req.query.endAt) : null;
+            const hasDateWindow =
+                startAt !== null &&
+                endAt !== null &&
+                !Number.isNaN(startAt.getTime()) &&
+                !Number.isNaN(endAt.getTime()) &&
+                endAt > startAt;
 
-        const boats = await prisma.boat.findMany({
-            where: Object.keys(where).length ? where : undefined,
-            include: {
-                captain: { select: { id: true, displayName: true } },
-                pricings: { where: { activeTo: null }, orderBy: { activeFrom: "desc" } },
-                rumboPricings: { orderBy: { rumbo: "asc" } },
-                photos: { orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }], take: 5 }
-            },
-            orderBy: { createdAt: "desc" }
-        });
-        return { boats };
-    });
+            const where: any = {
+                ...(paxFilter !== null ? { maxPassengers: { gte: paxFilter } } : {}),
+                ...(someRumboPricing ? { rumboPricings: { some: someRumboPricing } } : {}),
+                ...(hasDateWindow
+                    ? {
+                        trips: {
+                            none: {
+                                status: { in: [TripStatus.ACCEPTED, TripStatus.ACTIVE] },
+                                startAt: { lt: endAt! },
+                                endAt: { gt: startAt! }
+                            }
+                        }
+                    }
+                    : {})
+            };
+
+            const boats = await prisma.boat.findMany({
+                where: Object.keys(where).length ? where : undefined,
+                include: {
+                    captain: { select: { id: true, displayName: true } },
+                    pricings: { where: { activeTo: null }, orderBy: { activeFrom: "desc" } },
+                    rumboPricings: { orderBy: { rumbo: "asc" } },
+                    photos: { orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }], take: 5 }
+                },
+                orderBy: { createdAt: "desc" }
+            });
+            return { boats };
+        }
+    );
 
     app.get<{ Params: { id: string } }>("/boats/:id", async (req) => {
         const boat = await prisma.boat.findUnique({

@@ -43,12 +43,7 @@ export default async function HomePage() {
                     </p>
 
                     <form className={styles.search} action="/boats" method="GET">
-                        <div className={styles.seg}>
-                            <div className={styles.segLabel}>Where</div>
-                            <div className={styles.segValue}>Lechería</div>
-                        </div>
-                        <div className={styles.divider} />
-                        <label className={styles.seg}>
+                        <label className={`${styles.seg} ${styles.segTight}`}>
                             <div className={styles.segLabel}>Destino</div>
                             <select className={styles.input} name="destino" defaultValue="">
                                 <option value="">Any</option>
@@ -66,9 +61,24 @@ export default async function HomePage() {
                             </select>
                         </label>
                         <div className={styles.divider} />
-                        <label className={styles.seg}>
+                        <label className={`${styles.seg} ${styles.segTight}`}>
                             <div className={styles.segLabel}>Passengers</div>
                             <input className={styles.input} name="pax" type="number" min={1} placeholder="6" />
+                        </label>
+                        <div className={styles.divider} />
+                        <label className={styles.seg}>
+                            <div className={styles.segLabel}>Date</div>
+                            <input className={styles.input} name="date" type="date" />
+                        </label>
+                        <div className={styles.divider} />
+                        <label className={styles.seg}>
+                            <div className={styles.segLabel}>Start</div>
+                            <input className={styles.input} name="startTime" type="time" />
+                        </label>
+                        <div className={styles.divider} />
+                        <label className={styles.seg}>
+                            <div className={styles.segLabel}>Hours</div>
+                            <input className={styles.input} name="hours" type="number" min={1} step={1} placeholder="4" />
                         </label>
                         <div className={styles.divider} />
                         <label className={styles.seg}>
