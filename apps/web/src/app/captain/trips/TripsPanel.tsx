@@ -45,6 +45,7 @@ export function TripsPanel({ trips }: { trips: Trip[] }) {
     const [openTripId, setOpenTripId] = useState<string | null>(null);
 
     const byId = useMemo(() => new Map(trips.map((t) => [t.id, t])), [trips]);
+    const openTrip = openTripId ? byId.get(openTripId) ?? null : null;
 
     const conflictingRequestedIds = useMemo(() => {
         const out = new Set<string>();
@@ -187,33 +188,6 @@ export function TripsPanel({ trips }: { trips: Trip[] }) {
                                                         {formatCaracasTime(t.startAt)}–{formatCaracasTime(t.endAt)}
                                                     </div>
                                                 </button>
-
-                                                {openTripId === t.id ? (
-                                                    <div className={styles.eventOverlay} role="dialog" aria-label="Trip actions">
-                                                        <div className={styles.eventOverlayTitle}>Trip request</div>
-                                                        <div className={styles.eventOverlayMeta}>{formatCaracasRange(t.startAt, t.endAt)}</div>
-                                                        <div className={styles.eventOverlayRow}>
-                                                            {t.status === "REQUESTED" ? (
-                                                                <>
-                                                                    <form method="POST" action={`/api/captain/trips/accept?id=${t.id}`}>
-                                                                        <button className={styles.primary} type="submit">
-                                                                            Accept
-                                                                        </button>
-                                                                    </form>
-                                                                    <form method="POST" action={`/api/captain/trips/reject?id=${t.id}`}>
-                                                                        <button className={styles.secondary} type="submit">
-                                                                            Reject
-                                                                        </button>
-                                                                    </form>
-                                                                </>
-                                                            ) : (
-                                                                <button className={styles.secondary} type="button" onClick={() => setOpenTripId(null)}>
-                                                                    Close
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                ) : null}
                                             </div>
                                         ))
                                     ) : (
@@ -225,6 +199,45 @@ export function TripsPanel({ trips }: { trips: Trip[] }) {
                     })}
                 </div>
             )}
+
+            {openTrip ? (
+                <div className={styles.modalBackdrop} role="dialog" aria-label="Trip actions">
+                    <button className={styles.modalBackdropBtn} type="button" onClick={() => setOpenTripId(null)} aria-label="Close" />
+                    <div className={styles.modal}>
+                        <div className={styles.modalTitle}>{openTrip.boat.name}</div>
+                        <div className={styles.modalMeta}>
+                            {openTrip.createdBy.email} • {formatCaracasRange(openTrip.startAt, openTrip.endAt)}
+                        </div>
+                        <div className={styles.modalMeta}>
+                            <span className={`${styles.pill} ${statusColor(openTrip, conflictingRequestedIds.has(openTrip.id))}`}>
+                                {statusLabel(openTrip)}
+                            </span>
+                            {"  "}• Total: {formatUsdFromCents(openTrip.totalCents)} {openTrip.currency} • Payment:{" "}
+                            {openTrip.payment?.status ?? "NONE"}
+                        </div>
+
+                        <div className={styles.modalRow}>
+                            {openTrip.status === "REQUESTED" ? (
+                                <>
+                                    <form method="POST" action={`/api/captain/trips/accept?id=${openTrip.id}`}>
+                                        <button className={styles.primary} type="submit">
+                                            Accept
+                                        </button>
+                                    </form>
+                                    <form method="POST" action={`/api/captain/trips/reject?id=${openTrip.id}`}>
+                                        <button className={styles.secondary} type="submit">
+                                            Reject
+                                        </button>
+                                    </form>
+                                </>
+                            ) : null}
+                            <button className={styles.secondary} type="button" onClick={() => setOpenTripId(null)}>
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
         </div>
     );
 }

@@ -201,35 +201,54 @@
     position: relative;
 }
 
-.eventOverlay {
+.modalBackdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    display: grid;
+    place-items: center;
+    padding: 18px;
+}
+
+.modalBackdropBtn {
     position: absolute;
     inset: 0;
-    border-radius: 12px;
-    border: 1px solid rgba(15, 23, 42, 0.16);
-    background: rgba(255, 255, 255, 0.92);
-    backdrop-filter: blur(8px);
-    padding: 10px;
-    display: grid;
-    gap: 8px;
-    box-shadow: 0 14px 30px rgba(2, 8, 23, 0.12);
+    border: none;
+    background: rgba(2, 8, 23, 0.35);
+    backdrop-filter: blur(2px);
+    cursor: pointer;
 }
 
-.eventOverlayTitle {
+.modal {
+    position: relative;
+    width: min(520px, calc(100vw - 36px));
+    border-radius: 16px;
+    border: 1px solid rgba(15, 23, 42, 0.14);
+    background: #ffffff;
+    box-shadow: 0 24px 70px rgba(2, 8, 23, 0.25);
+    padding: 14px 14px 16px;
+    z-index: 1000;
+}
+
+.modalTitle {
     font-weight: 950;
-    font-size: 12px;
+    letter-spacing: -0.2px;
+    font-size: 16px;
+    margin-bottom: 6px;
 }
 
-.eventOverlayMeta {
+.modalMeta {
+    margin-top: 6px;
     font-size: 12px;
     opacity: 0.8;
     font-weight: 800;
 }
 
-.eventOverlayRow {
+.modalRow {
     display: flex;
-    gap: 8px;
-    align-items: center;
-    margin-top: 2px;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 14px;
 }
 
 .eventTitle {
