@@ -10,6 +10,7 @@ type Trip = {
     status: "REQUESTED" | "ACCEPTED" | "ACTIVE" | "COMPLETED" | "CANCELED" | string;
     startAt: string;
     endAt: string;
+    rumbo?: "RUMBO_1" | "RUMBO_2" | "RUMBO_3" | string | null;
     passengerCount?: number;
     notes?: string | null;
     currency: string;
@@ -18,6 +19,14 @@ type Trip = {
     createdBy: { email: string };
     payment: null | { status: string };
 };
+
+function rumboLabel(r: Trip["rumbo"]) {
+    if (r === "RUMBO_1") return "Rumbo 1";
+    if (r === "RUMBO_2") return "Rumbo 2";
+    if (r === "RUMBO_3") return "Rumbo 3";
+    if (!r) return "—";
+    return String(r);
+}
 
 function overlaps(aStart: Date, aEnd: Date, bStart: Date, bEnd: Date) {
     return aStart < bEnd && aEnd > bStart;
@@ -140,6 +149,7 @@ export function TripsPanel({ trips }: { trips: Trip[] }) {
                                 {t.createdBy.email} • {formatCaracasRange(t.startAt, t.endAt)}
                             </div>
                             <div className={styles.meta}>Passengers: {t.passengerCount ?? 1}</div>
+                            <div className={styles.meta}>Rumbo: {rumboLabel(t.rumbo)}</div>
                             <div className={styles.meta}>
                                 Total: {formatUsdFromCents(t.totalCents)} {t.currency} • Payment: {t.payment?.status ?? "NONE"}
                             </div>
@@ -212,6 +222,7 @@ export function TripsPanel({ trips }: { trips: Trip[] }) {
                             {openTrip.createdBy.email} • {formatCaracasRange(openTrip.startAt, openTrip.endAt)}
                         </div>
                         <div className={styles.modalMeta}>Passengers: {openTrip.passengerCount ?? 1}</div>
+                        <div className={styles.modalMeta}>Rumbo: {rumboLabel(openTrip.rumbo)}</div>
                         {openTrip.notes ? <div className={styles.modalNote}>Notes: {openTrip.notes}</div> : null}
                         <div className={styles.modalMeta}>
                             <span className={`${styles.pill} ${statusColor(openTrip, conflictingRequestedIds.has(openTrip.id))}`}>

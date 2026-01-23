@@ -66,6 +66,7 @@ export const tripsRoutes: FastifyPluginAsync = async (app) => {
                 status: trip.status,
                 startAt: trip.startAt,
                 endAt: trip.endAt,
+                rumbo: (trip.pricingSnapshot as any)?.rumbo ?? null,
                 passengerCount: trip.passengerCount,
                 notes: trip.notes,
                 currency: trip.currency,
@@ -358,14 +359,29 @@ export const tripsRoutes: FastifyPluginAsync = async (app) => {
         const { captain } = await requireCaptain(app, req);
         const trips = await prisma.trip.findMany({
             where: { boat: { captainId: captain.id } },
-            include: {
+            select: {
+                id: true,
+                status: true,
+                startAt: true,
+                endAt: true,
+                passengerCount: true,
+                notes: true,
+                pricingSnapshot: true,
+                currency: true,
+                totalCents: true,
                 boat: { select: { id: true, name: true } },
                 createdBy: { select: { id: true, email: true } },
                 payment: true
             },
             orderBy: { createdAt: "desc" }
         });
-        return { trips };
+
+        return {
+            trips: trips.map((t) => ({
+                ...t,
+                rumbo: (t.pricingSnapshot as any)?.rumbo ?? null
+            }))
+        };
     });
 };
 
