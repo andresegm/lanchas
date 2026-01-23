@@ -192,6 +192,44 @@
     border-radius: 12px;
     border: 1px solid rgba(15, 23, 42, 0.10);
     padding: 8px 10px;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+}
+
+.eventWrap {
+    position: relative;
+}
+
+.eventOverlay {
+    position: absolute;
+    inset: 0;
+    border-radius: 12px;
+    border: 1px solid rgba(15, 23, 42, 0.16);
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(8px);
+    padding: 10px;
+    display: grid;
+    gap: 8px;
+    box-shadow: 0 14px 30px rgba(2, 8, 23, 0.12);
+}
+
+.eventOverlayTitle {
+    font-weight: 950;
+    font-size: 12px;
+}
+
+.eventOverlayMeta {
+    font-size: 12px;
+    opacity: 0.8;
+    font-weight: 800;
+}
+
+.eventOverlayRow {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 2px;
 }
 
 .eventTitle {

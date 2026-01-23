@@ -39,8 +39,8 @@ export const tripsRoutes: FastifyPluginAsync = async (app) => {
         if (!trip) throw app.httpErrors.notFound("Trip not found");
 
         const isParticipant = trip.participants.some((p) => p.userId === payload.sub);
-        const isCaptainUser = trip.boat.captain.userId === payload.sub;
-        if (!isParticipant && !isCaptainUser) throw app.httpErrors.forbidden("Not your trip");
+        // Trip detail page is guest-facing; captains should not access it.
+        if (!isParticipant) throw app.httpErrors.forbidden("Guests only");
 
         return { trip };
     });

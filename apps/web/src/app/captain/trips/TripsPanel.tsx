@@ -42,6 +42,7 @@ function statusLabel(t: Trip) {
 export function TripsPanel({ trips }: { trips: Trip[] }) {
     const [view, setView] = useState<"list" | "calendar">("list");
     const [weekStart, setWeekStart] = useState<Date>(() => new Date());
+    const [openTripId, setOpenTripId] = useState<string | null>(null);
 
     const byId = useMemo(() => new Map(trips.map((t) => [t.id, t])), [trips]);
 
@@ -175,12 +176,45 @@ export function TripsPanel({ trips }: { trips: Trip[] }) {
                                 <div className={styles.dayBody}>
                                     {dayTrips.length ? (
                                         dayTrips.map((t) => (
-                                            <a key={t.id} href={`/trips/${t.id}`} className={`${styles.event} ${statusColor(t, conflictingRequestedIds.has(t.id))}`}>
-                                                <div className={styles.eventTitle}>{t.boat.name}</div>
-                                                <div className={styles.eventMeta}>
-                                                    {formatCaracasTime(t.startAt)}–{formatCaracasTime(t.endAt)}
-                                                </div>
-                                            </a>
+                                            <div key={t.id} className={styles.eventWrap}>
+                                                <button
+                                                    type="button"
+                                                    className={`${styles.event} ${statusColor(t, conflictingRequestedIds.has(t.id))}`}
+                                                    onClick={() => setOpenTripId((cur) => (cur === t.id ? null : t.id))}
+                                                >
+                                                    <div className={styles.eventTitle}>{t.boat.name}</div>
+                                                    <div className={styles.eventMeta}>
+                                                        {formatCaracasTime(t.startAt)}–{formatCaracasTime(t.endAt)}
+                                                    </div>
+                                                </button>
+
+                                                {openTripId === t.id ? (
+                                                    <div className={styles.eventOverlay} role="dialog" aria-label="Trip actions">
+                                                        <div className={styles.eventOverlayTitle}>Trip request</div>
+                                                        <div className={styles.eventOverlayMeta}>{formatCaracasRange(t.startAt, t.endAt)}</div>
+                                                        <div className={styles.eventOverlayRow}>
+                                                            {t.status === "REQUESTED" ? (
+                                                                <>
+                                                                    <form method="POST" action={`/api/captain/trips/accept?id=${t.id}`}>
+                                                                        <button className={styles.primary} type="submit">
+                                                                            Accept
+                                                                        </button>
+                                                                    </form>
+                                                                    <form method="POST" action={`/api/captain/trips/reject?id=${t.id}`}>
+                                                                        <button className={styles.secondary} type="submit">
+                                                                            Reject
+                                                                        </button>
+                                                                    </form>
+                                                                </>
+                                                            ) : (
+                                                                <button className={styles.secondary} type="button" onClick={() => setOpenTripId(null)}>
+                                                                    Close
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ) : null}
+                                            </div>
                                         ))
                                     ) : (
                                         <div className={styles.empty}>No trips</div>
