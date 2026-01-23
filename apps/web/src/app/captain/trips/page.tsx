@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getApiBaseUrl } from "@/lib/apiBase";
 import styles from "./page.module.css";
-import { formatUsdFromCents } from "@/lib/money";
+import { TripsPanel } from "./TripsPanel";
 import { formatCaracasRange } from "@/lib/datetime";
 
 type CaptainTripsResponse = {
@@ -43,47 +43,9 @@ export default async function CaptainTripsPage() {
     return (
         <div className={styles.wrap}>
             <h1 className={styles.h1}>Captain trips</h1>
-            <p className={styles.p}>Accept/reject requests.</p>
+            <p className={styles.p}>Toggle between list and calendar. Pending conflicts are highlighted.</p>
 
-            <div className={styles.list}>
-                {data.trips.map((t) => (
-                    <div key={t.id} className={styles.card}>
-                        <div className={styles.titleRow}>
-                            <div className={styles.title}>{t.boat.name}</div>
-                            <span className={styles.badge}>{t.status}</span>
-                        </div>
-                        <div className={styles.meta}>
-                            {t.createdBy.email} • {formatCaracasRange(t.startAt, t.endAt)}
-                        </div>
-                        <div className={styles.meta}>
-                            Total: {formatUsdFromCents(t.totalCents)} {t.currency} • Payment: {t.payment?.status ?? "NONE"}
-                        </div>
-
-                        {t.status === "REQUESTED" ? (
-                            <div className={styles.row}>
-                                <form method="POST" action={`/api/captain/trips/accept?id=${t.id}`}>
-                                    <button className={styles.primary} type="submit">
-                                        Accept
-                                    </button>
-                                </form>
-                                <form method="POST" action={`/api/captain/trips/reject?id=${t.id}`}>
-                                    <button className={styles.secondary} type="submit">
-                                        Reject
-                                    </button>
-                                </form>
-                            </div>
-                        ) : null}
-
-                        {t.status === "ACCEPTED" ? (
-                            <form method="POST" action={`/api/captain/trips/${t.id}/complete`}>
-                                <button className={styles.secondary} type="submit">
-                                    Mark completed
-                                </button>
-                            </form>
-                        ) : null}
-                    </div>
-                ))}
-            </div>
+            <TripsPanel trips={data.trips} />
         </div>
     );
 }
