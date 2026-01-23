@@ -41,6 +41,9 @@ export async function Nav() {
                     <a href="/boats" className={styles.link}>
                         Boats
                     </a>
+                    <a href="/destinations" className={styles.link}>
+                        Destinations
+                    </a>
                     <a href="/trips" className={styles.link}>
                         My trips
                     </a>
@@ -60,6 +63,9 @@ export async function Nav() {
                 <>
                     <a href="/boats" className={styles.link}>
                         Boats
+                    </a>
+                    <a href="/destinations" className={styles.link}>
+                        Destinations
                     </a>
                     <a href="/login" className={styles.link}>
                         Login

@@ -94,6 +94,9 @@ export default async function HomePage() {
                         <a className={styles.chip} href="/boats">
                             Popular
                         </a>
+                        <a className={styles.chip} href="/destinations">
+                            Destinations
+                        </a>
                         <a className={styles.chip} href="/boats?destino=Las%20Borrachas">
                             Las Borrachas
                         </a>
