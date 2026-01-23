@@ -162,7 +162,8 @@ export const boatsRoutes: FastifyPluginAsync = async (app) => {
             const trips = await prisma.trip.findMany({
                 where: {
                     boatId: boat.id,
-                    status: { in: [TripStatus.REQUESTED, TripStatus.ACCEPTED, TripStatus.ACTIVE, TripStatus.COMPLETED] },
+                    // Only block times that the captain has actually accepted (or is currently active).
+                    status: { in: [TripStatus.ACCEPTED, TripStatus.ACTIVE] },
                     startAt: { lt: to },
                     endAt: { gt: from }
                 },
