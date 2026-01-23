@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getApiBaseUrl } from "@/lib/apiBase";
 import styles from "./page.module.css";
 import { formatUsdFromCents } from "@/lib/money";
+import { formatCaracasRange } from "@/lib/datetime";
 
 type TripDetail = {
     trip: {
@@ -52,7 +53,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
 
             <h1 className={styles.h1}>Trip</h1>
             <div className={styles.meta}>
-                {t.boat.name} • {t.boat.captain.displayName} • {t.startAt} → {t.endAt}
+                {t.boat.name} • {t.boat.captain.displayName} • {formatCaracasRange(t.startAt, t.endAt)}
             </div>
             <div className={styles.meta}>
                 Status: <strong>{t.status}</strong> • Total: {formatUsdFromCents(t.totalCents)} {t.currency} • Payment:{" "}

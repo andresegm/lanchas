@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getApiBaseUrl } from "@/lib/apiBase";
 import styles from "./page.module.css";
 import { formatUsdFromCents } from "@/lib/money";
+import { formatCaracasRange } from "@/lib/datetime";
 
 type TripsMeResponse = {
     trips: Array<{
@@ -48,7 +49,7 @@ export default async function TripsPage() {
                                 <span className={styles.badge}>{t.status}</span>
                             </div>
                             <div className={styles.meta}>
-                                {t.startAt} → {t.endAt}
+                                {formatCaracasRange(t.startAt, t.endAt)}
                             </div>
                             <div className={styles.meta}>
                                 Total: {formatUsdFromCents(t.totalCents)} {t.currency} • Payment: {t.payment?.status ?? "NONE"}
