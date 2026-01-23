@@ -30,51 +30,108 @@ export async function Nav() {
     const me = await getMe();
     const authed = !!me?.user?.email;
 
-    return (
-        <div className={styles.wrap}>
+    const desktopLinks = authed ? (
+        <>
             <a href="/" className={styles.link}>
                 Home
             </a>
+            <a href="/boats" className={styles.link}>
+                Boats
+            </a>
+            <a href="/destinations" className={styles.link}>
+                Destinations
+            </a>
+            <a href="/trips" className={styles.link}>
+                My trips
+            </a>
+            <a href="/captain/log" className={styles.link}>
+                Captain Log
+            </a>
+            <a href="/profile" className={styles.meta}>
+                {me?.user.email}
+            </a>
+            <form method="POST" action="/api/auth/logout">
+                <button className={styles.button} type="submit">
+                    Logout
+                </button>
+            </form>
+        </>
+    ) : (
+        <>
+            <a href="/" className={styles.link}>
+                Home
+            </a>
+            <a href="/boats" className={styles.link}>
+                Boats
+            </a>
+            <a href="/destinations" className={styles.link}>
+                Destinations
+            </a>
+            <a href="/login" className={styles.link}>
+                Login
+            </a>
+            <a href="/register" className={styles.link}>
+                Register
+            </a>
+        </>
+    );
 
-            {authed ? (
-                <>
-                    <a href="/boats" className={styles.link}>
-                        Boats
-                    </a>
-                    <a href="/destinations" className={styles.link}>
-                        Destinations
-                    </a>
-                    <a href="/trips" className={styles.link}>
-                        My trips
-                    </a>
-                    <a href="/captain/log" className={styles.link}>
-                        Captain Log
-                    </a>
-                    <a href="/profile" className={styles.meta}>
-                        {me?.user.email}
-                    </a>
-                    <form method="POST" action="/api/auth/logout">
-                        <button className={styles.button} type="submit">
-                            Logout
-                        </button>
-                    </form>
-                </>
-            ) : (
-                <>
-                    <a href="/boats" className={styles.link}>
-                        Boats
-                    </a>
-                    <a href="/destinations" className={styles.link}>
-                        Destinations
-                    </a>
-                    <a href="/login" className={styles.link}>
-                        Login
-                    </a>
-                    <a href="/register" className={styles.link}>
-                        Register
-                    </a>
-                </>
-            )}
+    const mobileMenuItems = authed ? (
+        <>
+            <a href="/" className={styles.menuLink}>
+                Home
+            </a>
+            <a href="/boats" className={styles.menuLink}>
+                Boats
+            </a>
+            <a href="/destinations" className={styles.menuLink}>
+                Destinations
+            </a>
+            <a href="/trips" className={styles.menuLink}>
+                My trips
+            </a>
+            <a href="/captain/log" className={styles.menuLink}>
+                Captain Log
+            </a>
+            <a href="/profile" className={styles.menuMeta}>
+                {me?.user.email}
+            </a>
+            <form method="POST" action="/api/auth/logout" className={styles.menuForm}>
+                <button className={styles.menuButton} type="submit">
+                    Logout
+                </button>
+            </form>
+        </>
+    ) : (
+        <>
+            <a href="/" className={styles.menuLink}>
+                Home
+            </a>
+            <a href="/boats" className={styles.menuLink}>
+                Boats
+            </a>
+            <a href="/destinations" className={styles.menuLink}>
+                Destinations
+            </a>
+            <a href="/login" className={styles.menuLink}>
+                Login
+            </a>
+            <a href="/register" className={styles.menuLink}>
+                Register
+            </a>
+        </>
+    );
+
+    return (
+        <div className={styles.wrap}>
+            <div className={styles.desktop}>{desktopLinks}</div>
+
+            <details className={styles.mobile}>
+                <summary className={styles.burger} aria-label="Open menu">
+                    Menu
+                </summary>
+                <div className={styles.menu}>{mobileMenuItems}</div>
+            </details>
         </div>
     );
 }
