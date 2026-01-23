@@ -104,16 +104,23 @@ export default async function CaptainPage({
                 <>
                     <div className={styles.card}>
                         <h2 className={styles.h2}>Profile</h2>
-                        <div className={styles.kv}>
-                            <div>
-                                <div className={styles.k}>Display name</div>
-                                <div className={styles.v}>{data.captain.displayName}</div>
-                            </div>
-                            <div>
-                                <div className={styles.k}>Phone</div>
-                                <div className={styles.v}>{data.captain.phone ?? "—"}</div>
-                            </div>
-                        </div>
+                        <form className={styles.form} method="POST" action="/api/captain/me">
+                            <label className={styles.label}>
+                                <span>Display name</span>
+                                <input className={styles.input} name="displayName" defaultValue={data.captain.displayName} required />
+                            </label>
+                            <label className={styles.label}>
+                                <span>Bio (optional)</span>
+                                <textarea className={styles.textarea} name="bio" rows={3} defaultValue={data.captain.bio ?? ""} />
+                            </label>
+                            <label className={styles.label}>
+                                <span>Phone (optional)</span>
+                                <input className={styles.input} name="phone" defaultValue={data.captain.phone ?? ""} />
+                            </label>
+                            <button className={styles.secondary} type="submit">
+                                Save profile
+                            </button>
+                        </form>
                     </div>
 
                     <div className={styles.card}>
@@ -155,6 +162,16 @@ export default async function CaptainPage({
                                                 </div>
                                             </div>
                                         </div>
+
+                                        <form className={styles.form} method="POST" action={`/api/captain/boats/${b.id}`}>
+                                            <label className={styles.label}>
+                                                <span>Boat name</span>
+                                                <input className={styles.input} name="name" defaultValue={b.name} required />
+                                            </label>
+                                            <button className={styles.secondary} type="submit">
+                                                Save boat name
+                                            </button>
+                                        </form>
 
                                         <div className={styles.photoRow}>
                                             {b.photos[0]?.url ? (

@@ -11,12 +11,22 @@ type CreateCaptainBody = {
     phone?: string;
 };
 
+type UpdateCaptainBody = {
+    displayName?: string;
+    bio?: string | null;
+    phone?: string | null;
+};
+
 type CreateBoatBody = {
     name?: string;
     maxPassengers?: number;
     minimumHours?: number;
     licenseRef?: string | null;
     insuranceRef?: string | null;
+};
+
+type UpdateBoatBody = {
+    name?: string;
 };
 
 type AddBoatPhotoBody = {
@@ -89,6 +99,23 @@ export const captainRoutes: FastifyPluginAsync = async (app) => {
         return { captain };
     });
 
+    // Captain updates profile (displayName, bio, phone)
+    app.post<{ Body: UpdateCaptainBody }>("/captain/me", async (req) => {
+        const { captain } = await requireCaptain(app, req);
+        const displayName = req.body.displayName?.trim();
+        if (!displayName) throw app.httpErrors.badRequest("displayName is required");
+
+        const updated = await prisma.captain.update({
+            where: { id: captain.id },
+            data: {
+                displayName,
+                bio: req.body.bio === undefined ? undefined : req.body.bio ? String(req.body.bio).trim() : null,
+                phone: req.body.phone === undefined ? undefined : req.body.phone ? String(req.body.phone).trim() : null
+            }
+        });
+        return { captain: updated };
+    });
+
     app.post<{ Body: CreateBoatBody }>("/captain/boats", async (req) => {
         const { captain } = await requireCaptain(app, req);
 
@@ -115,6 +142,23 @@ export const captainRoutes: FastifyPluginAsync = async (app) => {
             }
         });
         return { boat };
+    });
+
+    // Captain updates a boat (currently: name only)
+    app.post<{ Params: { boatId: string }; Body: UpdateBoatBody }>("/captain/boats/:boatId", async (req) => {
+        const { captain } = await requireCaptain(app, req);
+        const boat = await prisma.boat.findUnique({ where: { id: req.params.boatId }, select: { id: true, captainId: true } });
+        if (!boat) throw app.httpErrors.notFound("Boat not found");
+        if (boat.captainId !== captain.id) throw app.httpErrors.forbidden("Not your boat");
+
+        const name = req.body.name?.trim();
+        if (!name) throw app.httpErrors.badRequest("name is required");
+
+        const updated = await prisma.boat.update({
+            where: { id: boat.id },
+            data: { name }
+        });
+        return { boat: updated };
     });
 
     app.post<{ Params: { boatId: string }; Body: AddBoatPhotoBody }>("/captain/boats/:boatId/photos", async (req) => {
