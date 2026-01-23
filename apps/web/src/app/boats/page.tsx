@@ -83,11 +83,11 @@ export default async function BoatsPage({
             <h1 className={styles.h1}>Boats</h1>
             <p className={styles.p}>Filter by island (destino), passengers, and max price per hour.</p>
 
-            <form className={styles.filters} method="GET" action="/boats">
+            <form className={styles.filters} method="GET" action="/boats" suppressHydrationWarning>
                 <div className={styles.filterGroup}>
                     <label className={styles.labelInline}>
                         <span className={styles.filterLabel}>Destino</span>
-                        <select className={styles.select} name="destino" defaultValue={destino}>
+                        <select className={styles.select} name="destino" defaultValue={destino} suppressHydrationWarning>
                             <option value="">Any</option>
                             {DESTINOS.map((d) => (
                                 <option key={d} value={d}>
@@ -100,31 +100,57 @@ export default async function BoatsPage({
                 <div className={styles.filterGroup}>
                     <label className={styles.labelInline}>
                         <span className={styles.filterLabel}>Passengers</span>
-                        <input className={styles.select} name="pax" type="number" min={1} placeholder="6" defaultValue={pax} />
+                        <input
+                            className={styles.select}
+                            name="pax"
+                            type="number"
+                            min={1}
+                            placeholder="6"
+                            defaultValue={pax}
+                            suppressHydrationWarning
+                        />
                     </label>
                 </div>
                 <div className={styles.filterGroup}>
                     <label className={styles.labelInline}>
                         <span className={styles.filterLabel}>Date</span>
-                        <input className={styles.select} name="date" type="date" defaultValue={date} />
+                        <input className={styles.select} name="date" type="date" defaultValue={date} suppressHydrationWarning />
                     </label>
                 </div>
                 <div className={styles.filterGroup}>
                     <label className={styles.labelInline}>
                         <span className={styles.filterLabel}>Start time</span>
-                        <input className={styles.select} name="startTime" type="time" defaultValue={startTime} />
+                        <input className={styles.select} name="startTime" type="time" defaultValue={startTime} suppressHydrationWarning />
                     </label>
                 </div>
                 <div className={styles.filterGroup}>
                     <label className={styles.labelInline}>
                         <span className={styles.filterLabel}>Hours</span>
-                        <input className={styles.select} name="hours" type="number" min={1} step={1} placeholder="4" defaultValue={hours} />
+                        <input
+                            className={styles.select}
+                            name="hours"
+                            type="number"
+                            min={1}
+                            step={1}
+                            placeholder="4"
+                            defaultValue={hours}
+                            suppressHydrationWarning
+                        />
                     </label>
                 </div>
                 <div className={styles.filterGroup}>
                     <label className={styles.labelInline}>
                         <span className={styles.filterLabel}>Max $/hr</span>
-                        <input className={styles.select} name="maxPrice" type="number" min={1} step={1} placeholder="120" defaultValue={maxPrice} />
+                        <input
+                            className={styles.select}
+                            name="maxPrice"
+                            type="number"
+                            min={1}
+                            step={1}
+                            placeholder="120"
+                            defaultValue={maxPrice}
+                            suppressHydrationWarning
+                        />
                     </label>
                 </div>
                 <button className={styles.secondary} type="submit">

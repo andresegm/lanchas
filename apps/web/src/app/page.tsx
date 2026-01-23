@@ -48,10 +48,10 @@ export default async function HomePage() {
                         Browse real boats from independent captains, request a time slot, and track the booking end‑to‑end.
                     </p>
 
-                    <form className={styles.search} action="/boats" method="GET">
+                    <form className={styles.search} action="/boats" method="GET" suppressHydrationWarning>
                         <label className={`${styles.seg} ${styles.segTight}`}>
                             <div className={styles.segLabel}>Destino</div>
-                            <select className={styles.input} name="destino" defaultValue="">
+                            <select className={styles.input} name="destino" defaultValue="" suppressHydrationWarning>
                                 <option value="">Any</option>
                                 <option value="Las Borrachas">Las Borrachas</option>
                                 <option value="Puinare">Puinare</option>
@@ -69,27 +69,35 @@ export default async function HomePage() {
                         <div className={styles.divider} />
                         <label className={`${styles.seg} ${styles.segTight}`}>
                             <div className={styles.segLabel}>Passengers</div>
-                            <input className={styles.input} name="pax" type="number" min={1} placeholder="6" />
+                            <input className={styles.input} name="pax" type="number" min={1} placeholder="6" suppressHydrationWarning />
                         </label>
                         <div className={styles.divider} />
                         <label className={styles.seg}>
                             <div className={styles.segLabel}>Date</div>
-                            <input className={styles.input} name="date" type="date" />
+                            <input className={styles.input} name="date" type="date" suppressHydrationWarning />
                         </label>
                         <div className={styles.divider} />
                         <label className={styles.seg}>
                             <div className={styles.segLabel}>Start</div>
-                            <input className={styles.input} name="startTime" type="time" />
+                            <input className={styles.input} name="startTime" type="time" suppressHydrationWarning />
                         </label>
                         <div className={styles.divider} />
                         <label className={styles.seg}>
                             <div className={styles.segLabel}>Hours</div>
-                            <input className={styles.input} name="hours" type="number" min={1} step={1} placeholder="4" />
+                            <input
+                                className={styles.input}
+                                name="hours"
+                                type="number"
+                                min={1}
+                                step={1}
+                                placeholder="4"
+                                suppressHydrationWarning
+                            />
                         </label>
                         <div className={styles.divider} />
                         <label className={styles.seg}>
                             <div className={styles.segLabel}>Max $/hr</div>
-                            <input className={styles.input} name="maxPrice" type="number" min={1} step={1} placeholder="120" />
+                            <input className={styles.input} name="maxPrice" type="number" min={1} step={1} placeholder="120" suppressHydrationWarning />
                         </label>
                         <button className={styles.searchBtn} type="submit">
                             Search
