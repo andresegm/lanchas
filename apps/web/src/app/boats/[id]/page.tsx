@@ -126,6 +126,32 @@ export default async function BoatPage({ params }: { params: Promise<{ id: strin
                         <p className={styles.dim}>This boat has no rumbos pricing configured yet.</p>
                     )}
                 </div>
+
+                <div className={styles.card}>
+                    <h2 className={styles.h2}>Rumbos overview</h2>
+                    <p className={styles.dim}>
+                        In Lechería, trips typically follow one (or more) of these routes. Your selected rumbo determines the hourly rate.
+                    </p>
+
+                    <div className={styles.rumboBlock}>
+                        <div className={styles.rumboTitle}>Rumbo 1</div>
+                        <div className={styles.rumboText}>
+                            Las Borrachas (snorkel stop), Puinare (busiest), El Faro (beach + party at night), El Saco, Bahía del Silencio (quiet bay).
+                        </div>
+                    </div>
+                    <div className={styles.rumboBlock}>
+                        <div className={styles.rumboTitle}>Rumbo 2</div>
+                        <div className={styles.rumboText}>Isla de Plata (turquoise + white sand), Varadero (long beach), Punta la Cruz (quick access).</div>
+                    </div>
+                    <div className={styles.rumboBlock}>
+                        <div className={styles.rumboTitle}>Rumbo 3</div>
+                        <div className={styles.rumboText}>Las Caracas (postcard beach), Playa Piscina (calm “pool” water), El Tigrillo (quieter spot).</div>
+                    </div>
+
+                    <a className={styles.secondaryLink} href="/destinations">
+                        See full destination guide →
+                    </a>
+                </div>
             </div>
         </div>
     );
