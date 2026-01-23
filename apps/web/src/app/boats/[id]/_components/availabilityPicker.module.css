@@ -8,12 +8,25 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
+    min-width: 0;
 }
 
 .field {
     display: flex;
     flex-direction: column;
     gap: 6px;
+    min-width: 0;
+}
+
+/* Ensure react-datepicker wrappers don't exceed the field width */
+.field :global(.react-datepicker-wrapper),
+.field :global(.react-datepicker__input-container) {
+    width: 100%;
+}
+
+.field :global(.react-datepicker__input-container input) {
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .label {
@@ -29,6 +42,7 @@
     padding: 10px 12px;
     font-size: 14px;
     background: white;
+    box-sizing: border-box;
 }
 
 .hint {
