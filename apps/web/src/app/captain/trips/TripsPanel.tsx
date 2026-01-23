@@ -10,6 +10,8 @@ type Trip = {
     status: "REQUESTED" | "ACCEPTED" | "ACTIVE" | "COMPLETED" | "CANCELED" | string;
     startAt: string;
     endAt: string;
+    passengerCount?: number;
+    notes?: string | null;
     currency: string;
     totalCents: number;
     boat: { name: string };
@@ -137,6 +139,7 @@ export function TripsPanel({ trips }: { trips: Trip[] }) {
                             <div className={styles.meta}>
                                 {t.createdBy.email} • {formatCaracasRange(t.startAt, t.endAt)}
                             </div>
+                            <div className={styles.meta}>Passengers: {t.passengerCount ?? 1}</div>
                             <div className={styles.meta}>
                                 Total: {formatUsdFromCents(t.totalCents)} {t.currency} • Payment: {t.payment?.status ?? "NONE"}
                             </div>
@@ -208,6 +211,8 @@ export function TripsPanel({ trips }: { trips: Trip[] }) {
                         <div className={styles.modalMeta}>
                             {openTrip.createdBy.email} • {formatCaracasRange(openTrip.startAt, openTrip.endAt)}
                         </div>
+                        <div className={styles.modalMeta}>Passengers: {openTrip.passengerCount ?? 1}</div>
+                        {openTrip.notes ? <div className={styles.modalNote}>Notes: {openTrip.notes}</div> : null}
                         <div className={styles.modalMeta}>
                             <span className={`${styles.pill} ${statusColor(openTrip, conflictingRequestedIds.has(openTrip.id))}`}>
                                 {statusLabel(openTrip)}

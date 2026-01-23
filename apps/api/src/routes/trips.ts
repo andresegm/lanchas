@@ -6,6 +6,7 @@ type CreateTripBody = {
     boatId?: string;
     pricingType?: "PRIVATE_HOURLY";
     rumbo?: string;
+    passengerCount?: number;
     startAt?: string;
     endAt?: string;
     notes?: string;
@@ -45,6 +46,37 @@ export const tripsRoutes: FastifyPluginAsync = async (app) => {
         return { trip };
     });
 
+    // Captain-safe trip detail (no incidents/reviews; includes guest contact + pax)
+    app.get<{ Params: { id: string } }>("/trips/:id/captain", async (req) => {
+        const { captain } = await requireCaptain(app, req);
+        const trip = await prisma.trip.findUnique({
+            where: { id: req.params.id },
+            include: {
+                boat: { select: { id: true, name: true, captainId: true } },
+                createdBy: { select: { id: true, email: true } },
+                payment: true
+            }
+        });
+        if (!trip) throw app.httpErrors.notFound("Trip not found");
+        if (trip.boat.captainId !== captain.id) throw app.httpErrors.forbidden("Not your trip");
+
+        return {
+            trip: {
+                id: trip.id,
+                status: trip.status,
+                startAt: trip.startAt,
+                endAt: trip.endAt,
+                passengerCount: trip.passengerCount,
+                notes: trip.notes,
+                currency: trip.currency,
+                totalCents: trip.totalCents,
+                boat: { id: trip.boat.id, name: trip.boat.name },
+                createdBy: trip.createdBy,
+                payment: trip.payment
+            }
+        };
+    });
+
     // User creates a trip request (private or per-person)
     app.post<{ Body: CreateTripBody }>("/trips", async (req) => {
         const payload = await requireAuthed(app, req);
@@ -69,6 +101,14 @@ export const tripsRoutes: FastifyPluginAsync = async (app) => {
             select: { id: true, minimumHours: true, maxPassengers: true }
         });
         if (!boat) throw app.httpErrors.notFound("Boat not found");
+
+        const passengerCount = req.body.passengerCount === undefined ? 1 : Number(req.body.passengerCount);
+        if (!Number.isFinite(passengerCount) || passengerCount < 1) {
+            throw app.httpErrors.badRequest("passengerCount must be >= 1");
+        }
+        if (passengerCount > boat.maxPassengers) {
+            throw app.httpErrors.badRequest(`passengerCount must be <= ${boat.maxPassengers}`);
+        }
 
         const rumboPricing = await prisma.boatRumboPricing.findUnique({
             where: { boatId_rumbo: { boatId, rumbo } }
@@ -99,6 +139,7 @@ export const tripsRoutes: FastifyPluginAsync = async (app) => {
                 status: TripStatus.REQUESTED,
                 startAt,
                 endAt,
+                passengerCount,
                 notes: req.body.notes?.trim() || null,
                 pricingSnapshot: snapshot as any,
                 subtotalCents: baseSubtotal,

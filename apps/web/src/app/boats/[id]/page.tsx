@@ -99,6 +99,19 @@ export default async function BoatPage({ params }: { params: Promise<{ id: strin
                                     </select>
                                 </label>
 
+                                <label className={styles.label}>
+                                    <span>Passengers</span>
+                                    <input
+                                        className={styles.input}
+                                        name="passengerCount"
+                                        type="number"
+                                        min={1}
+                                        max={b.maxPassengers}
+                                        defaultValue={1}
+                                        required
+                                    />
+                                </label>
+
                                 <AvailabilityPicker boatId={b.id} />
                                 <label className={styles.label}>
                                     <span>Notes (optional)</span>
