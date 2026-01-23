@@ -6,7 +6,8 @@ type BoatsResponse = {
     boats: Array<{
         id: string;
         name: string;
-        captain: { displayName: string };
+        rating: { avg: number | null; count: number };
+        captain: { displayName: string; rating: { avg: number | null; count: number } };
         photos?: Array<{ id: string; url: string }>;
         rumboPricings: Array<{
             rumbo: "RUMBO_1" | "RUMBO_2" | "RUMBO_3";
@@ -15,6 +16,11 @@ type BoatsResponse = {
         }>;
     }>;
 };
+
+function formatRating(avg: number | null, count: number) {
+    if (!avg || count === 0) return "New";
+    return `${avg.toFixed(1)}★ (${count})`;
+}
 
 async function fetchFeaturedBoats(): Promise<BoatsResponse["boats"]> {
     const apiBase = getApiBaseUrl();
@@ -172,7 +178,9 @@ export default async function HomePage() {
                                 )}
                                 <div className={styles.cardBody}>
                                     <div className={styles.cardTitle}>{b.name}</div>
-                                    <div className={styles.cardMeta}>{b.captain.displayName}</div>
+                                    <div className={styles.cardMeta}>
+                                        {b.captain.displayName} • {formatRating(b.captain.rating.avg, b.captain.rating.count)}
+                                    </div>
                                     <div className={styles.cardMeta}>
                                         {(() => {
                                             if (!b.rumboPricings?.length) return "Hourly rate not set";

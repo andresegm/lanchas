@@ -119,18 +119,50 @@ export const tripsRoutes: FastifyPluginAsync = async (app) => {
     // Captain accepts/rejects
     app.post<{ Params: { id: string } }>("/trips/:id/accept", async (req) => {
         const { captain } = await requireCaptain(app, req);
-        const trip = await prisma.trip.findUnique({ where: { id: req.params.id }, select: { id: true, boatId: true } });
+        const trip = await prisma.trip.findUnique({
+            where: { id: req.params.id },
+            select: { id: true, boatId: true, status: true, startAt: true, endAt: true }
+        });
         if (!trip) throw app.httpErrors.notFound("Trip not found");
 
         const boat = await prisma.boat.findUnique({ where: { id: trip.boatId }, select: { captainId: true } });
         if (!boat) throw app.httpErrors.notFound("Boat not found");
         if (boat.captainId !== captain.id) throw app.httpErrors.forbidden("Not your trip");
 
-        const updated = await prisma.trip.update({
-            where: { id: trip.id },
-            data: { status: TripStatus.ACCEPTED }
+        if (trip.status === TripStatus.CANCELED) throw app.httpErrors.badRequest("Trip is canceled");
+        if (trip.status === TripStatus.COMPLETED) throw app.httpErrors.badRequest("Trip is already completed");
+
+        // Prevent accepting if there is already an ACCEPTED/ACTIVE overlap for this boat.
+        const existingAccepted = await prisma.trip.findFirst({
+            where: {
+                boatId: trip.boatId,
+                id: { not: trip.id },
+                status: { in: [TripStatus.ACCEPTED, TripStatus.ACTIVE] },
+                startAt: { lt: trip.endAt },
+                endAt: { gt: trip.startAt }
+            },
+            select: { id: true }
         });
-        return { trip: updated };
+        if (existingAccepted) throw app.httpErrors.conflict("Boat already has an accepted trip in that time window");
+
+        const [updated, canceled] = await prisma.$transaction([
+            prisma.trip.update({
+                where: { id: trip.id },
+                data: { status: TripStatus.ACCEPTED }
+            }),
+            prisma.trip.updateMany({
+                where: {
+                    boatId: trip.boatId,
+                    id: { not: trip.id },
+                    status: TripStatus.REQUESTED,
+                    startAt: { lt: trip.endAt },
+                    endAt: { gt: trip.startAt }
+                },
+                data: { status: TripStatus.CANCELED }
+            })
+        ]);
+
+        return { trip: updated, canceledConflicts: canceled.count };
     });
 
     app.post<{ Params: { id: string } }>("/trips/:id/reject", async (req) => {

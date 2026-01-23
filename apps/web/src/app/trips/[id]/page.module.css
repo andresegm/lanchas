@@ -94,6 +94,34 @@
     cursor: pointer;
 }
 
+.stars {
+    display: inline-flex;
+    flex-direction: row-reverse;
+    gap: 4px;
+    align-items: center;
+}
+
+.stars input {
+    display: none;
+}
+
+.stars label {
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    color: rgba(15, 23, 42, 0.25);
+    user-select: none;
+}
+
+.stars input:checked~label {
+    color: #f59e0b;
+}
+
+.stars label:hover,
+.stars label:hover~label {
+    color: #f59e0b;
+}
+
 .ul {
     margin: 0;
     padding-left: 18px;

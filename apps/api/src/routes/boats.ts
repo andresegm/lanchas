@@ -121,7 +121,57 @@ export const boatsRoutes: FastifyPluginAsync = async (app) => {
                 },
                 orderBy: { createdAt: "desc" }
             });
-            return { boats };
+
+            // Ratings: use CAPTAIN reviews as the source of truth.
+            // - Boat rating: avg rating for CAPTAIN reviews on trips for that boat
+            // - Captain rating: avg rating for CAPTAIN reviews across all boats for that captain
+            type BoatRatingRow = { boatId: string; avg: number | null; count: number };
+            type CaptainRatingRow = { captainId: string; avg: number | null; count: number };
+
+            const boatIds = boats.map((b) => b.id);
+            const captainIds = boats.map((b) => b.captain.id);
+
+            const [boatRatings, captainRatings] = await Promise.all([
+                boatIds.length
+                    ? prisma.$queryRaw<BoatRatingRow[]>`
+                    SELECT t."boatId" as "boatId",
+                           AVG(r."rating")::float as "avg",
+                           COUNT(*)::int as "count"
+                    FROM "Review" r
+                    JOIN "Trip" t ON t."id" = r."tripId"
+                    WHERE r."targetType" = 'CAPTAIN'
+                      AND t."boatId" = ANY(${boatIds}::text[])
+                    GROUP BY t."boatId"
+                `
+                    : Promise.resolve([] as BoatRatingRow[]),
+                captainIds.length
+                    ? prisma.$queryRaw<CaptainRatingRow[]>`
+                    SELECT b."captainId" as "captainId",
+                           AVG(r."rating")::float as "avg",
+                           COUNT(*)::int as "count"
+                    FROM "Review" r
+                    JOIN "Trip" t ON t."id" = r."tripId"
+                    JOIN "Boat" b ON b."id" = t."boatId"
+                    WHERE r."targetType" = 'CAPTAIN'
+                      AND b."captainId" = ANY(${captainIds}::text[])
+                    GROUP BY b."captainId"
+                `
+                    : Promise.resolve([] as CaptainRatingRow[])
+            ]);
+
+            const boatRatingById = new Map(boatRatings.map((r) => [r.boatId, { avg: r.avg, count: r.count }]));
+            const captainRatingById = new Map(captainRatings.map((r) => [r.captainId, { avg: r.avg, count: r.count }]));
+
+            return {
+                boats: boats.map((b) => ({
+                    ...b,
+                    rating: boatRatingById.get(b.id) ?? { avg: null, count: 0 },
+                    captain: {
+                        ...b.captain,
+                        rating: captainRatingById.get(b.captain.id) ?? { avg: null, count: 0 }
+                    }
+                }))
+            };
         }
     );
 
@@ -136,7 +186,40 @@ export const boatsRoutes: FastifyPluginAsync = async (app) => {
             }
         });
         if (!boat) throw app.httpErrors.notFound("Boat not found");
-        return { boat };
+
+        type OneBoatRow = { avg: number | null; count: number };
+        type OneCaptainRow = { avg: number | null; count: number };
+
+        const [boatRating, captainRating] = await Promise.all([
+            prisma.$queryRaw<OneBoatRow[]>`
+                SELECT AVG(r."rating")::float as "avg",
+                       COUNT(*)::int as "count"
+                FROM "Review" r
+                JOIN "Trip" t ON t."id" = r."tripId"
+                WHERE r."targetType" = 'CAPTAIN'
+                  AND t."boatId" = ${boat.id}
+            `,
+            prisma.$queryRaw<OneCaptainRow[]>`
+                SELECT AVG(r."rating")::float as "avg",
+                       COUNT(*)::int as "count"
+                FROM "Review" r
+                JOIN "Trip" t ON t."id" = r."tripId"
+                JOIN "Boat" b ON b."id" = t."boatId"
+                WHERE r."targetType" = 'CAPTAIN'
+                  AND b."captainId" = ${boat.captain.id}
+            `
+        ]);
+
+        return {
+            boat: {
+                ...boat,
+                rating: boatRating[0] ?? { avg: null, count: 0 },
+                captain: {
+                    ...boat.captain,
+                    rating: captainRating[0] ?? { avg: null, count: 0 }
+                }
+            }
+        };
     });
 
     // Minimal availability for UI date picker:

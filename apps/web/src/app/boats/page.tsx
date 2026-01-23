@@ -9,7 +9,8 @@ type BoatsResponse = {
         maxPassengers: number;
         minimumHours: number;
         photos?: Array<{ id: string; url: string }>;
-        captain: { displayName: string };
+        rating: { avg: number | null; count: number };
+        captain: { displayName: string; rating: { avg: number | null; count: number } };
         rumboPricings: Array<{
             rumbo: "RUMBO_1" | "RUMBO_2" | "RUMBO_3";
             currency: string;
@@ -17,6 +18,11 @@ type BoatsResponse = {
         }>;
     }>;
 };
+
+function formatRating(avg: number | null, count: number) {
+    if (!avg || count === 0) return "New";
+    return `${avg.toFixed(1)}★ (${count})`;
+}
 
 function rumboLabel(r: "RUMBO_1" | "RUMBO_2" | "RUMBO_3") {
     if (r === "RUMBO_1") return "Rumbo 1";
@@ -136,7 +142,8 @@ export default async function BoatsPage({
                         )}
                         <div className={styles.title}>{b.name}</div>
                         <div className={styles.meta}>
-                            {b.captain.displayName} • {b.maxPassengers} pax • min {b.minimumHours}h
+                            {b.captain.displayName} • {formatRating(b.captain.rating.avg, b.captain.rating.count)} • {b.maxPassengers} pax • min{" "}
+                            {b.minimumHours}h
                         </div>
                         <div className={styles.pricing}>
                             {b.rumboPricings.length ? (

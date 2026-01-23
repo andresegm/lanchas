@@ -59,6 +59,13 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
                 Status: <strong>{t.status}</strong> • Total: {formatUsdFromCents(t.totalCents)} {t.currency} • Payment:{" "}
                 {t.payment?.status ?? "NONE"}
             </div>
+            {t.status === "ACCEPTED" && !t.payment ? (
+                <form method="POST" action={`/api/trips/${t.id}/pay`}>
+                    <button className={styles.secondary} type="submit">
+                        Pay (stub)
+                    </button>
+                </form>
+            ) : null}
             {t.notes ? <div className={styles.notes}>Notes: {t.notes}</div> : null}
 
             <div className={styles.grid}>
@@ -119,8 +126,29 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
                         <form method="POST" action={`/api/trips/${t.id}/reviews`} className={styles.form}>
                             <input type="hidden" name="targetType" value="CAPTAIN" />
                             <label className={styles.label}>
-                                <span>Rating (1-5)</span>
-                                <input className={styles.input} name="rating" type="number" min={1} max={5} required />
+                                <span>Rating</span>
+                                <div className={styles.stars} aria-label="Rating (1-5 stars)">
+                                    <input id="cap_star_5" name="rating" type="radio" value="5" required />
+                                    <label htmlFor="cap_star_5" title="5 stars">
+                                        ★
+                                    </label>
+                                    <input id="cap_star_4" name="rating" type="radio" value="4" />
+                                    <label htmlFor="cap_star_4" title="4 stars">
+                                        ★
+                                    </label>
+                                    <input id="cap_star_3" name="rating" type="radio" value="3" />
+                                    <label htmlFor="cap_star_3" title="3 stars">
+                                        ★
+                                    </label>
+                                    <input id="cap_star_2" name="rating" type="radio" value="2" />
+                                    <label htmlFor="cap_star_2" title="2 stars">
+                                        ★
+                                    </label>
+                                    <input id="cap_star_1" name="rating" type="radio" value="1" />
+                                    <label htmlFor="cap_star_1" title="1 star">
+                                        ★
+                                    </label>
+                                </div>
                             </label>
                             <label className={styles.label}>
                                 <span>Comment (optional)</span>
