@@ -41,26 +41,28 @@ export default async function TripsPage() {
 
             <div className={styles.list}>
                 {data.trips.map((t) => (
-                    <a key={t.id} className={styles.card} href={`/trips/${t.id}`}>
-                        <div className={styles.titleRow}>
-                            <div className={styles.title}>{t.boat.name}</div>
-                            <span className={styles.badge}>{t.status}</span>
-                        </div>
-                        <div className={styles.meta}>
-                            {t.startAt} → {t.endAt}
-                        </div>
-                        <div className={styles.meta}>
-                            Total: {formatUsdFromCents(t.totalCents)} {t.currency} • Payment: {t.payment?.status ?? "NONE"}
-                        </div>
+                    <div key={t.id} className={styles.card}>
+                        <a className={styles.cardMain} href={`/trips/${t.id}`}>
+                            <div className={styles.titleRow}>
+                                <div className={styles.title}>{t.boat.name}</div>
+                                <span className={styles.badge}>{t.status}</span>
+                            </div>
+                            <div className={styles.meta}>
+                                {t.startAt} → {t.endAt}
+                            </div>
+                            <div className={styles.meta}>
+                                Total: {formatUsdFromCents(t.totalCents)} {t.currency} • Payment: {t.payment?.status ?? "NONE"}
+                            </div>
+                        </a>
 
                         {t.status === "ACCEPTED" && !t.payment ? (
-                            <form method="POST" action={`/api/trips/${t.id}/pay`} onClick={(e) => e.stopPropagation()}>
+                            <form method="POST" action={`/api/trips/${t.id}/pay`}>
                                 <button className={styles.primary} type="submit">
                                     Pay (stub)
                                 </button>
                             </form>
                         ) : null}
-                    </a>
+                    </div>
                 ))}
             </div>
         </div>
