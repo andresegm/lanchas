@@ -65,8 +65,17 @@ export default async function BoatPage({ params }: { params: Promise<{ id: strin
                 {b.captain.displayName} • {formatRating(b.captain.rating.avg, b.captain.rating.count)} • {b.maxPassengers} pax • min {b.minimumHours}h
             </div>
 
-            {b.photos?.[0]?.url ? (
-                <img className={styles.heroImg} src={b.photos[0].url} alt={`${b.name} photo`} />
+            {b.photos?.length ? (
+                <div className={styles.galleryWrap}>
+                    <div className={styles.gallery} aria-label="Boat photos">
+                        {b.photos.map((p, idx) => (
+                            <div key={p.id} className={styles.galleryItem}>
+                                <img className={styles.galleryImg} src={p.url} alt={`${b.name} photo ${idx + 1}`} />
+                            </div>
+                        ))}
+                    </div>
+                    {b.photos.length > 1 ? <div className={styles.galleryHint}>Swipe/scroll to see more photos →</div> : null}
+                </div>
             ) : null}
 
             <div className={styles.grid}>

@@ -238,22 +238,69 @@ export default async function CaptainPage({
                                                     ) : (
                                                         <div className={styles.photoPlaceholder} aria-hidden="true" />
                                                     )}
-                                                    <form className={styles.photoForm} method="POST" action={`/api/captain/boats/${b.id}/photos`}>
-                                                        <label className={styles.label}>
-                                                            <span>Add photo URL</span>
-                                                            <input
-                                                                className={styles.input}
-                                                                name="url"
-                                                                placeholder="https://..."
-                                                                required
-                                                                suppressHydrationWarning
-                                                            />
-                                                        </label>
-                                                        <button className={styles.secondary} type="submit">
-                                                            Add photo
-                                                        </button>
-                                                    </form>
+                                                    <div className={styles.photoForm}>
+                                                        <form method="POST" action={`/api/captain/boats/${b.id}/photos`} className={styles.form}>
+                                                            <label className={styles.label}>
+                                                                <span>Main photo URL</span>
+                                                                <input
+                                                                    className={styles.input}
+                                                                    name="url"
+                                                                    placeholder="https://..."
+                                                                    required
+                                                                    suppressHydrationWarning
+                                                                />
+                                                            </label>
+                                                            <input type="hidden" name="sortOrder" value="0" />
+                                                            <button className={styles.secondary} type="submit">
+                                                                Set main photo
+                                                            </button>
+                                                        </form>
+
+                                                        <form method="POST" action={`/api/captain/boats/${b.id}/photos`} className={styles.form}>
+                                                            <label className={styles.label}>
+                                                                <span>Add another photo URL</span>
+                                                                <input
+                                                                    className={styles.input}
+                                                                    name="url"
+                                                                    placeholder="https://..."
+                                                                    required
+                                                                    suppressHydrationWarning
+                                                                />
+                                                            </label>
+                                                            <button className={styles.secondary} type="submit">
+                                                                Add photo
+                                                            </button>
+                                                        </form>
+                                                    </div>
                                                 </div>
+
+                                                {b.photos.length ? (
+                                                    <div className={styles.photoThumbs}>
+                                                        {b.photos.map((p, idx) => (
+                                                            <div key={p.id} className={styles.thumbActions}>
+                                                                <img
+                                                                    className={`${styles.thumb} ${idx === 0 ? styles.thumbMain : ""}`}
+                                                                    src={p.url}
+                                                                    alt={`${b.name} photo ${idx + 1}`}
+                                                                />
+                                                                {idx === 0 ? (
+                                                                    <div className={styles.meta}>Main</div>
+                                                                ) : (
+                                                                    <form method="POST" action={`/api/captain/boats/${b.id}/photos/${p.id}/main`}>
+                                                                        <button className={styles.tiny} type="submit">
+                                                                            Make main
+                                                                        </button>
+                                                                    </form>
+                                                                )}
+                                                                <form method="POST" action={`/api/captain/boats/${b.id}/photos/${p.id}/delete`}>
+                                                                    <button className={styles.tiny} type="submit">
+                                                                        Delete
+                                                                    </button>
+                                                                </form>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : null}
 
                                                 <div className={styles.pricingGrid}>
                                                     <div>

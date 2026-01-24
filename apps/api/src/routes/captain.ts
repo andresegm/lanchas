@@ -171,13 +171,86 @@ export const captainRoutes: FastifyPluginAsync = async (app) => {
         if (!url) throw app.httpErrors.badRequest("url is required");
         if (!/^https?:\/\//i.test(url)) throw app.httpErrors.badRequest("url must be http(s)");
 
-        const sortOrder = req.body.sortOrder === undefined ? 0 : Number(req.body.sortOrder);
-        if (!Number.isFinite(sortOrder) || sortOrder < 0) throw app.httpErrors.badRequest("sortOrder must be >= 0");
+        const providedSortOrder = req.body.sortOrder === undefined ? null : Number(req.body.sortOrder);
+        if (providedSortOrder !== null && (!Number.isFinite(providedSortOrder) || providedSortOrder < 0)) {
+            throw app.httpErrors.badRequest("sortOrder must be >= 0");
+        }
 
-        const photo = await prisma.boatPhoto.create({
-            data: { boatId: req.params.boatId, url, sortOrder }
+        const photo = await prisma.$transaction(async (tx) => {
+            // default: append after existing photos, keeping the first (sortOrder=0) as main
+            if (providedSortOrder === null) {
+                const agg = await tx.boatPhoto.aggregate({
+                    where: { boatId: req.params.boatId },
+                    _max: { sortOrder: true }
+                });
+                const sortOrder = (agg._max.sortOrder ?? -1) + 1;
+                return tx.boatPhoto.create({ data: { boatId: req.params.boatId, url, sortOrder } });
+            }
+
+            // If explicitly setting as main, bump all existing photos down and insert at 0.
+            if (providedSortOrder === 0) {
+                await tx.boatPhoto.updateMany({
+                    where: { boatId: req.params.boatId },
+                    data: { sortOrder: { increment: 1 } }
+                });
+                return tx.boatPhoto.create({ data: { boatId: req.params.boatId, url, sortOrder: 0 } });
+            }
+
+            return tx.boatPhoto.create({ data: { boatId: req.params.boatId, url, sortOrder: providedSortOrder } });
         });
+
         return { photo };
+    });
+
+    // Make an existing photo the main photo (sortOrder=0)
+    app.post<{ Params: { boatId: string; photoId: string } }>("/captain/boats/:boatId/photos/:photoId/main", async (req) => {
+        const { captain } = await requireCaptain(app, req);
+        const boat = await prisma.boat.findUnique({ where: { id: req.params.boatId }, select: { captainId: true } });
+        if (!boat) throw app.httpErrors.notFound("Boat not found");
+        if (boat.captainId !== captain.id) throw app.httpErrors.forbidden("Not your boat");
+
+        const photo = await prisma.boatPhoto.findUnique({ where: { id: req.params.photoId }, select: { id: true, boatId: true } });
+        if (!photo || photo.boatId !== req.params.boatId) throw app.httpErrors.notFound("Photo not found");
+
+        await prisma.$transaction(async (tx) => {
+            await tx.boatPhoto.updateMany({
+                where: { boatId: req.params.boatId, id: { not: req.params.photoId } },
+                data: { sortOrder: { increment: 1 } }
+            });
+            await tx.boatPhoto.update({ where: { id: req.params.photoId }, data: { sortOrder: 0 } });
+        });
+
+        return { ok: true };
+    });
+
+    // Delete a photo (and re-normalize ordering so the lowest becomes main)
+    app.post<{ Params: { boatId: string; photoId: string } }>("/captain/boats/:boatId/photos/:photoId/delete", async (req) => {
+        const { captain } = await requireCaptain(app, req);
+        const boat = await prisma.boat.findUnique({ where: { id: req.params.boatId }, select: { captainId: true } });
+        if (!boat) throw app.httpErrors.notFound("Boat not found");
+        if (boat.captainId !== captain.id) throw app.httpErrors.forbidden("Not your boat");
+
+        const photo = await prisma.boatPhoto.findUnique({
+            where: { id: req.params.photoId },
+            select: { id: true, boatId: true }
+        });
+        if (!photo || photo.boatId !== req.params.boatId) throw app.httpErrors.notFound("Photo not found");
+
+        await prisma.$transaction(async (tx) => {
+            await tx.boatPhoto.delete({ where: { id: req.params.photoId } });
+
+            const remaining = await tx.boatPhoto.findMany({
+                where: { boatId: req.params.boatId },
+                orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }]
+            });
+
+            // compact to 0..n so we always have a clear "main"
+            await Promise.all(
+                remaining.map((p, idx) => tx.boatPhoto.update({ where: { id: p.id }, data: { sortOrder: idx } }))
+            );
+        });
+
+        return { ok: true };
     });
 
     // Upsert or remove a boat's per-rumbo hourly pricing.

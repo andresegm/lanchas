@@ -28,11 +28,61 @@
 .heroImg {
     width: 100%;
     max-height: 340px;
-    object-fit: cover;
+    object-fit: contain;
     border-radius: 16px;
     border: 1px solid rgba(15, 23, 42, 0.12);
     margin-bottom: 14px;
     background: rgba(255, 255, 255, 0.6);
+}
+
+.galleryWrap {
+    position: relative;
+    margin-bottom: 14px;
+}
+
+.gallery {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    margin-bottom: 6px;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: thin;
+}
+
+.gallery::after {
+    content: "";
+    position: sticky;
+    right: 0;
+    width: 64px;
+    flex: 0 0 64px;
+    background: linear-gradient(90deg, rgba(248, 250, 252, 0), rgba(248, 250, 252, 1));
+}
+
+.galleryItem {
+    scroll-snap-align: start;
+    /* show a "peek" of the next image so it's obvious the gallery scrolls */
+    flex: 0 0 calc(100% - 48px);
+    border-radius: 16px;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    background: rgba(255, 255, 255, 0.6);
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.galleryImg {
+    width: 100%;
+    height: auto;
+    max-height: 360px;
+    object-fit: contain;
+    display: block;
+    border-radius: 12px;
+}
+
+.galleryHint {
+    font-size: 12px;
+    font-weight: 850;
+    opacity: 0.75;
 }
 
 .grid {
