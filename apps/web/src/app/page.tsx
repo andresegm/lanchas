@@ -123,7 +123,7 @@ export default async function HomePage() {
                         <a className={styles.chip} href="/boats">
                             Sunset
                         </a>
-                        <a className={styles.chip} href="/captain/log">
+                        <a className={styles.chip} href="/captain">
                             List your boat
                         </a>
                     </div>
@@ -214,6 +214,20 @@ export default async function HomePage() {
                 <div className={styles.disclaimer}>
                     <strong>Important:</strong> Lanchas is a marketplace. Captains are independent operators responsible for
                     licensing, insurance, safety, and vessel condition.
+                </div>
+            </section>
+
+            <section className={styles.section}>
+                <div className={styles.captainCta}>
+                    <div>
+                        <div className={styles.captainTitle}>Become a captain on Lanchas</div>
+                        <div className={styles.captainBody}>
+                            List your boat, set your hourly rates by rumbo, and start receiving trip requests from locals and tourists.
+                        </div>
+                    </div>
+                    <a className={styles.captainBtn} href="/captain">
+                        Get started
+                    </a>
                 </div>
             </section>
         </div>

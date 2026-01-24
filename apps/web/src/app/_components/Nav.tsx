@@ -70,9 +70,11 @@ export async function Nav() {
             <a href="/trips" className={styles.link}>
                 My trips
             </a>
-            <a href="/captain/log" className={styles.link}>
-                Captain Log {unread > 0 ? <span className={styles.badge}>{unread}</span> : null}
-            </a>
+            {isCaptain ? (
+                <a href="/captain/log" className={styles.link}>
+                    Captain Log {unread > 0 ? <span className={styles.badge}>{unread}</span> : null}
+                </a>
+            ) : null}
             <a href="/profile" className={styles.meta}>
                 {me?.user.email}
             </a>
@@ -116,9 +118,11 @@ export async function Nav() {
             <a href="/trips" className={styles.menuLink}>
                 My trips
             </a>
-            <a href="/captain/log" className={styles.menuLink}>
-                Captain Log {unread > 0 ? <span className={styles.badge}>{unread}</span> : null}
-            </a>
+            {isCaptain ? (
+                <a href="/captain/log" className={styles.menuLink}>
+                    Captain Log {unread > 0 ? <span className={styles.badge}>{unread}</span> : null}
+                </a>
+            ) : null}
             <a href="/profile" className={styles.menuMeta}>
                 {me?.user.email}
             </a>
