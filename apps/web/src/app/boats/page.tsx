@@ -83,6 +83,16 @@ export default async function BoatsPage({
             <h1 className={styles.h1}>Boats</h1>
             <p className={styles.p}>Filter by island (destino), passengers, and max price per hour.</p>
 
+            <div className={styles.liveRideCallout}>
+                <div>
+                    <div className={styles.liveRideTitle}>Need a ride now?</div>
+                    <div className={styles.liveRideMeta}>Request an on-the-spot ride from Plaza Mayor (fixed pricing for MVP).</div>
+                </div>
+                <a className={styles.liveRideBtn} href="/live-rides">
+                    Request live ride
+                </a>
+            </div>
+
             <form className={styles.filters} method="GET" action="/boats" suppressHydrationWarning>
                 <div className={styles.filterGroup}>
                     <label className={styles.labelInline}>

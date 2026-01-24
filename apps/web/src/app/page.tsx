@@ -48,6 +48,13 @@ export default async function HomePage() {
                         Browse real boats from independent captains, request a time slot, and track the booking end‑to‑end.
                     </p>
 
+                    <div className={styles.liveRideRow}>
+                        <div className={styles.liveRideText}>Leaving now from Plaza Mayor?</div>
+                        <a className={styles.liveRideBtn} href="/live-rides">
+                            Request a live ride
+                        </a>
+                    </div>
+
                     <form className={styles.search} action="/boats" method="GET" suppressHydrationWarning>
                         <label className={`${styles.seg} ${styles.segTight}`}>
                             <div className={styles.segLabel}>Destino</div>
