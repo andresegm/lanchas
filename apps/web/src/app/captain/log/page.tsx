@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import styles from "./page.module.css";
 import { getApiBaseUrl } from "@/lib/apiBase";
 import { formatCaracasRange } from "@/lib/datetime";
+import { NotificationsClient } from "./NotificationsClient";
 
 type NotificationsMeResponse = {
     unreadCount: number;
@@ -53,6 +54,7 @@ function rumboLabel(r: string | null) {
 
 export default async function CaptainLogPage() {
     const notifs = await loadNotifications();
+    const topUnreadId = notifs?.notifications?.find((n) => !n.readAt)?.id ?? null;
     return (
         <div className={styles.wrap}>
             <h1 className={styles.h1}>Captain Log</h1>
@@ -85,6 +87,8 @@ export default async function CaptainLogPage() {
                         </form>
                     ) : null}
                 </div>
+
+                {notifs ? <NotificationsClient initialUnread={notifs.unreadCount} initialTopUnreadId={topUnreadId} /> : null}
 
                 {notifs?.notifications?.length ? (
                     <div className={styles.list}>

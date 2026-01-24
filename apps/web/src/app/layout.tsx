@@ -4,6 +4,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import "./globals.css";
 import styles from "./layout.module.css";
 import { Nav } from "./_components/Nav";
+import { BrowserNotifications } from "./_components/BrowserNotifications";
 
 const inter = Inter({
     subsets: ["latin"],
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                     </nav>
                 </header>
                 <main className={styles.main}>{children}</main>
+                <BrowserNotifications />
             </body>
         </html>
     );
