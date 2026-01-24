@@ -24,6 +24,7 @@ export default async function ProfilePage() {
     if (!res.ok) redirect("/login");
 
     const data = (await res.json()) as MeResponse;
+    const isCaptain = data.user.role === "CAPTAIN" || data.user.role === "BOTH";
 
     return (
         <div className={styles.card}>
@@ -45,9 +46,15 @@ export default async function ProfilePage() {
                 <a className={styles.link} href="/trips">
                     My trips
                 </a>
-                <a className={styles.link} href="/captain">
-                    Captain
-                </a>
+                {isCaptain ? (
+                    <a className={styles.link} href="/captain/log">
+                        Captain&apos;s Log
+                    </a>
+                ) : (
+                    <a className={styles.link} href="/captain">
+                        Become a Captain
+                    </a>
+                )}
             </div>
 
             <form method="POST" action="/api/auth/logout">
