@@ -4,6 +4,13 @@ import { getApiBaseUrl } from "@/lib/apiBase";
 import { formatCaracasRange } from "@/lib/datetime";
 import { NotificationsClient } from "./NotificationsClient";
 
+type CaptainMeResponse = {
+    captain: null | {
+        id: string;
+        liveRidesOn: boolean;
+    };
+};
+
 type NotificationsMeResponse = {
     unreadCount: number;
     notifications: Array<{
@@ -55,6 +62,28 @@ async function loadNotifications(): Promise<NotificationsMeResponse | null> {
     }
 }
 
+async function loadCaptainMe(): Promise<CaptainMeResponse | null> {
+    const apiBase = getApiBaseUrl();
+    if (!apiBase) return null;
+
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore
+        .getAll()
+        .map((c: { name: string; value: string }) => `${c.name}=${c.value}`)
+        .join("; ");
+
+    try {
+        const res = await fetch(new URL("/captain/me", apiBase), {
+            headers: { cookie: cookieHeader },
+            cache: "no-store"
+        });
+        if (!res.ok) return null;
+        return (await res.json()) as CaptainMeResponse;
+    } catch {
+        return null;
+    }
+}
+
 function rumboLabel(r: string | null) {
     if (r === "RUMBO_1") return "Rumbo 1";
     if (r === "RUMBO_2") return "Rumbo 2";
@@ -64,6 +93,8 @@ function rumboLabel(r: string | null) {
 
 export default async function CaptainLogPage() {
     const notifs = await loadNotifications();
+    const cap = await loadCaptainMe();
+    const liveOn = !!cap?.captain?.liveRidesOn;
     const topUnreadId = notifs?.notifications?.find((n) => !n.readAt)?.id ?? null;
     return (
         <div className={styles.wrap}>
@@ -100,6 +131,23 @@ export default async function CaptainLogPage() {
 
                 {notifs ? <NotificationsClient initialUnread={notifs.unreadCount} initialTopUnreadId={topUnreadId} /> : null}
 
+                {cap?.captain ? (
+                    <div className={styles.liveRow}>
+                        <div>
+                            <div className={styles.liveTitle}>Live rides</div>
+                            <div className={styles.meta}>
+                                {liveOn ? "On — you may receive on-the-spot ride offers." : "Off — turn on to receive on-the-spot ride offers."}
+                            </div>
+                        </div>
+                        <form method="POST" action="/api/captain/me/live-rides">
+                            <input type="hidden" name="enabled" value={liveOn ? "false" : "true"} />
+                            <button className={styles.secondary} type="submit">
+                                {liveOn ? "Turn off" : "Turn on"}
+                            </button>
+                        </form>
+                    </div>
+                ) : null}
+
                 {notifs?.notifications?.length ? (
                     <div className={styles.list}>
                         {notifs.notifications.map((n) => (
@@ -127,7 +175,20 @@ export default async function CaptainLogPage() {
                                         <div className={styles.itemMeta}>—</div>
                                     )}
                                 </div>
-                                {!n.readAt ? (
+                                {n.type === "LIVE_RIDE_OFFER" && n.liveRide && !n.readAt ? (
+                                    <div className={styles.actionsCol}>
+                                        <form method="POST" action={`/api/live-rides/${n.liveRide.id}/accept`}>
+                                            <button className={styles.primary} type="submit">
+                                                Accept
+                                            </button>
+                                        </form>
+                                        <form method="POST" action={`/api/live-rides/${n.liveRide.id}/reject`}>
+                                            <button className={styles.secondary} type="submit">
+                                                Reject
+                                            </button>
+                                        </form>
+                                    </div>
+                                ) : !n.readAt ? (
                                     <form method="POST" action={`/api/notifications/${n.id}/read`}>
                                         <button className={styles.secondary} type="submit">
                                             Mark read
