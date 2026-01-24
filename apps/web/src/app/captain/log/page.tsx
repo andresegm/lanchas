@@ -1,6 +1,58 @@
+import { cookies } from "next/headers";
 import styles from "./page.module.css";
+import { getApiBaseUrl } from "@/lib/apiBase";
+import { formatCaracasRange } from "@/lib/datetime";
 
-export default function CaptainLogPage() {
+type NotificationsMeResponse = {
+    unreadCount: number;
+    notifications: Array<{
+        id: string;
+        type: string;
+        createdAt: string;
+        readAt: string | null;
+        trip: null | {
+            id: string;
+            startAt: string;
+            endAt: string;
+            passengerCount: number;
+            rumbo: string | null;
+            boat: { id: string; name: string };
+            createdBy: { id: string; email: string };
+        };
+    }>;
+};
+
+async function loadNotifications(): Promise<NotificationsMeResponse | null> {
+    const apiBase = getApiBaseUrl();
+    if (!apiBase) return null;
+
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore
+        .getAll()
+        .map((c: { name: string; value: string }) => `${c.name}=${c.value}`)
+        .join("; ");
+
+    try {
+        const res = await fetch(new URL("/notifications/me?limit=15", apiBase), {
+            headers: { cookie: cookieHeader },
+            cache: "no-store"
+        });
+        if (!res.ok) return null;
+        return (await res.json()) as NotificationsMeResponse;
+    } catch {
+        return null;
+    }
+}
+
+function rumboLabel(r: string | null) {
+    if (r === "RUMBO_1") return "Rumbo 1";
+    if (r === "RUMBO_2") return "Rumbo 2";
+    if (r === "RUMBO_3") return "Rumbo 3";
+    return r ?? "—";
+}
+
+export default async function CaptainLogPage() {
+    const notifs = await loadNotifications();
     return (
         <div className={styles.wrap}>
             <h1 className={styles.h1}>Captain Log</h1>
@@ -15,6 +67,56 @@ export default function CaptainLogPage() {
                     <div className={styles.title}>Trip requests</div>
                     <div className={styles.meta}>Accept/reject requests, mark trips completed.</div>
                 </a>
+            </div>
+
+            <div className={styles.cardWide}>
+                <div className={styles.rowHead}>
+                    <div>
+                        <div className={styles.title}>Notifications</div>
+                        <div className={styles.meta}>
+                            {notifs ? `${notifs.unreadCount} unread` : "Sign in as a captain to see notifications."}
+                        </div>
+                    </div>
+                    {notifs && notifs.unreadCount > 0 ? (
+                        <form method="POST" action="/api/notifications/read-all">
+                            <button className={styles.secondary} type="submit">
+                                Mark all read
+                            </button>
+                        </form>
+                    ) : null}
+                </div>
+
+                {notifs?.notifications?.length ? (
+                    <div className={styles.list}>
+                        {notifs.notifications.map((n) => (
+                            <div key={n.id} className={styles.item}>
+                                <div className={styles.itemMain}>
+                                    <div className={styles.itemTitle}>
+                                        {n.type === "TRIP_REQUESTED" ? "New trip request" : n.type}
+                                        {n.readAt ? null : <span className={styles.dot} aria-label="Unread" />}
+                                    </div>
+                                    {n.trip ? (
+                                        <div className={styles.itemMeta}>
+                                            {n.trip.boat.name} • {rumboLabel(n.trip.rumbo)} • {n.trip.passengerCount} pax •{" "}
+                                            {formatCaracasRange(n.trip.startAt, n.trip.endAt)} • {n.trip.createdBy.email}
+                                        </div>
+                                    ) : (
+                                        <div className={styles.itemMeta}>—</div>
+                                    )}
+                                </div>
+                                {!n.readAt ? (
+                                    <form method="POST" action={`/api/notifications/${n.id}/read`}>
+                                        <button className={styles.secondary} type="submit">
+                                            Mark read
+                                        </button>
+                                    </form>
+                                ) : null}
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className={styles.meta}>No notifications yet.</div>
+                )}
             </div>
         </div>
     );

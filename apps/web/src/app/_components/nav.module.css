@@ -117,10 +117,27 @@
     cursor: pointer;
 }
 
+.badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: #ef4444;
+    color: white;
+    font-weight: 950;
+    font-size: 11px;
+    margin-left: 6px;
+    line-height: 1;
+}
+
 @media (max-width: 760px) {
     .desktop {
         display: none;
     }
+
     .mobile {
         display: block;
     }

@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync } from "fastify";
-import { IncidentType, PaymentStatus, ReviewTargetType, Rumbo, TripStatus, prisma } from "@lanchas/prisma";
+import { IncidentType, NotificationType, PaymentStatus, ReviewTargetType, Rumbo, TripStatus, prisma } from "@lanchas/prisma";
 import { requireAuthed, requireCaptain } from "../auth/guards.js";
 
 type CreateTripBody = {
@@ -99,7 +99,7 @@ export const tripsRoutes: FastifyPluginAsync = async (app) => {
 
         const boat = await prisma.boat.findUnique({
             where: { id: boatId },
-            select: { id: true, minimumHours: true, maxPassengers: true }
+            select: { id: true, minimumHours: true, maxPassengers: true, captain: { select: { userId: true } } }
         });
         if (!boat) throw app.httpErrors.notFound("Boat not found");
 
@@ -151,6 +151,14 @@ export const tripsRoutes: FastifyPluginAsync = async (app) => {
                 participants: { create: { userId: payload.sub } }
             },
             include: { participants: true }
+        });
+
+        await prisma.notification.create({
+            data: {
+                userId: boat.captain.userId,
+                type: NotificationType.TRIP_REQUESTED,
+                tripId: trip.id
+            }
         });
 
         return { trip };

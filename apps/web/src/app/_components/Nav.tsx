@@ -3,6 +3,7 @@ import styles from "./nav.module.css";
 import { getApiBaseUrl } from "@/lib/apiBase";
 
 type MeResponse = { user: { email: string; role: string } };
+type NotificationsMeResponse = { unreadCount: number };
 
 async function getMe() {
     const apiBase = getApiBaseUrl();
@@ -29,6 +30,31 @@ async function getMe() {
 export async function Nav() {
     const me = await getMe();
     const authed = !!me?.user?.email;
+    const isCaptain = me?.user?.role === "CAPTAIN" || me?.user?.role === "BOTH";
+
+    let unread = 0;
+    if (authed && isCaptain) {
+        const apiBase = getApiBaseUrl();
+        if (apiBase) {
+            const cookieStore = await cookies();
+            const cookieHeader = cookieStore
+                .getAll()
+                .map((c: { name: string; value: string }) => `${c.name}=${c.value}`)
+                .join("; ");
+            try {
+                const res = await fetch(new URL("/notifications/me?unreadOnly=1&limit=1", apiBase), {
+                    headers: { cookie: cookieHeader },
+                    cache: "no-store"
+                });
+                if (res.ok) {
+                    const data = (await res.json()) as NotificationsMeResponse;
+                    unread = data.unreadCount ?? 0;
+                }
+            } catch {
+                // ignore
+            }
+        }
+    }
 
     const desktopLinks = authed ? (
         <>
@@ -45,7 +71,7 @@ export async function Nav() {
                 My trips
             </a>
             <a href="/captain/log" className={styles.link}>
-                Captain Log
+                Captain Log {unread > 0 ? <span className={styles.badge}>{unread}</span> : null}
             </a>
             <a href="/profile" className={styles.meta}>
                 {me?.user.email}
@@ -91,7 +117,7 @@ export async function Nav() {
                 My trips
             </a>
             <a href="/captain/log" className={styles.menuLink}>
-                Captain Log
+                Captain Log {unread > 0 ? <span className={styles.badge}>{unread}</span> : null}
             </a>
             <a href="/profile" className={styles.menuMeta}>
                 {me?.user.email}

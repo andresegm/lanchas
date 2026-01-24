@@ -52,6 +52,10 @@ enum IncidentType {
   OTHER
 }
 
+enum NotificationType {
+  TRIP_REQUESTED
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -65,6 +69,7 @@ model User {
   participants  TripParticipant[]
   reviewsGiven  Review[]          @relation("ReviewAuthor")
   refreshTokens RefreshToken[]
+  notifications Notification[]
 }
 
 model RefreshToken {
@@ -195,11 +200,28 @@ model Trip {
   payment    Payment?
   incidents  Incident[]
   reviews    Review[]
+  notifications Notification[]
 
   @@index([boatId])
   @@index([createdById])
   @@index([status])
   @@index([startAt])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  tripId    String?
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trip Trip? @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, readAt])
+  @@index([createdAt])
 }
 
 model TripParticipant {

@@ -8,6 +8,7 @@ import { authRoutes } from "./routes/auth.js";
 import { captainRoutes } from "./routes/captain.js";
 import { boatsRoutes } from "./routes/boats.js";
 import { tripsRoutes } from "./routes/trips.js";
+import { notificationsRoutes } from "./routes/notifications.js";
 
 export async function buildApp() {
     const app = Fastify({
@@ -31,6 +32,7 @@ export async function buildApp() {
     await app.register(captainRoutes);
     await app.register(boatsRoutes);
     await app.register(tripsRoutes);
+    await app.register(notificationsRoutes);
 
     app.get("/health", async () => ({ ok: true }));
 
