@@ -17,6 +17,10 @@ type UpdateCaptainBody = {
     phone?: string | null;
 };
 
+type LiveRidesToggleBody = {
+    enabled?: boolean;
+};
+
 type CreateBoatBody = {
     name?: string;
     maxPassengers?: number;
@@ -112,6 +116,17 @@ export const captainRoutes: FastifyPluginAsync = async (app) => {
                 bio: req.body.bio === undefined ? undefined : req.body.bio ? String(req.body.bio).trim() : null,
                 phone: req.body.phone === undefined ? undefined : req.body.phone ? String(req.body.phone).trim() : null
             }
+        });
+        return { captain: updated };
+    });
+
+    // Captain toggles live rides availability (MVP)
+    app.post<{ Body: LiveRidesToggleBody }>("/captain/me/live-rides", async (req) => {
+        const { captain } = await requireCaptain(app, req);
+        const enabled = !!req.body.enabled;
+        const updated = await prisma.captain.update({
+            where: { id: captain.id },
+            data: { liveRidesOn: enabled }
         });
         return { captain: updated };
     });

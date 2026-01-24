@@ -33,6 +33,19 @@ export const notificationsRoutes: FastifyPluginAsync = async (app) => {
                             boat: { select: { id: true, name: true } },
                             createdBy: { select: { id: true, email: true } }
                         }
+                    },
+                    liveRideRequest: {
+                        select: {
+                            id: true,
+                            pickupPoint: true,
+                            rumbo: true,
+                            passengerCount: true,
+                            hours: true,
+                            totalCents: true,
+                            currency: true,
+                            createdAt: true,
+                            createdBy: { select: { id: true, email: true } }
+                        }
                     }
                 }
             })
@@ -54,6 +67,19 @@ export const notificationsRoutes: FastifyPluginAsync = async (app) => {
                         rumbo: (n.trip.pricingSnapshot as any)?.rumbo ?? null,
                         boat: n.trip.boat,
                         createdBy: n.trip.createdBy
+                    }
+                    : null
+                ,
+                liveRide: n.liveRideRequest
+                    ? {
+                        id: n.liveRideRequest.id,
+                        pickupPoint: n.liveRideRequest.pickupPoint,
+                        rumbo: n.liveRideRequest.rumbo,
+                        passengerCount: n.liveRideRequest.passengerCount,
+                        hours: n.liveRideRequest.hours,
+                        currency: n.liveRideRequest.currency,
+                        totalCents: n.liveRideRequest.totalCents,
+                        createdBy: n.liveRideRequest.createdBy
                     }
                     : null
             }))

@@ -122,10 +122,15 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
         const refreshPlain: string | undefined = (req.cookies as any)?.[REFRESH_COOKIE];
         if (refreshPlain) {
             const refreshHash = sha256Base64Url(refreshPlain);
+            const token = await prisma.refreshToken.findUnique({ where: { tokenHash: refreshHash }, select: { userId: true } });
             await prisma.refreshToken.updateMany({
                 where: { tokenHash: refreshHash, revokedAt: null },
                 data: { revokedAt: new Date() }
             });
+            // Live rides should be off when a captain logs out (MVP behavior).
+            if (token?.userId) {
+                await prisma.captain.updateMany({ where: { userId: token.userId }, data: { liveRidesOn: false } });
+            }
         }
         clearAuthCookies(reply);
         return reply.send({ ok: true });

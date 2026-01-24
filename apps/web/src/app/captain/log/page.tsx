@@ -20,6 +20,16 @@ type NotificationsMeResponse = {
             boat: { id: string; name: string };
             createdBy: { id: string; email: string };
         };
+        liveRide?: null | {
+            id: string;
+            pickupPoint: string;
+            rumbo: string;
+            passengerCount: number;
+            hours: number;
+            currency: string;
+            totalCents: number;
+            createdBy: { id: string; email: string };
+        };
     }>;
 };
 
@@ -96,10 +106,19 @@ export default async function CaptainLogPage() {
                             <div key={n.id} className={styles.item}>
                                 <div className={styles.itemMain}>
                                     <div className={styles.itemTitle}>
-                                        {n.type === "TRIP_REQUESTED" ? "New trip request" : n.type}
+                                        {n.type === "TRIP_REQUESTED"
+                                            ? "New trip request"
+                                            : n.type === "LIVE_RIDE_OFFER"
+                                                ? "Live ride request"
+                                                : n.type}
                                         {n.readAt ? null : <span className={styles.dot} aria-label="Unread" />}
                                     </div>
-                                    {n.trip ? (
+                                    {n.liveRide ? (
+                                        <div className={styles.itemMeta}>
+                                            {n.liveRide.pickupPoint} • {rumboLabel(n.liveRide.rumbo)} • {n.liveRide.passengerCount} pax •{" "}
+                                            {n.liveRide.hours}h • {n.liveRide.createdBy.email}
+                                        </div>
+                                    ) : n.trip ? (
                                         <div className={styles.itemMeta}>
                                             {n.trip.boat.name} • {rumboLabel(n.trip.rumbo)} • {n.trip.passengerCount} pax •{" "}
                                             {formatCaracasRange(n.trip.startAt, n.trip.endAt)} • {n.trip.createdBy.email}

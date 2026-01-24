@@ -8,6 +8,7 @@ type Notif = {
     id: string;
     type: string;
     trip: null | { boat: { name: string }; passengerCount: number; rumbo: string | null; createdBy: { email: string } };
+    liveRide?: null | { pickupPoint: string; rumbo: string; passengerCount: number; hours: number; createdBy: { email: string } };
 };
 type NotificationsMeResponse = { unreadCount: number; notifications: Notif[] };
 
@@ -17,13 +18,26 @@ function isCaptainRole(role: string | undefined) {
 
 function makeTitle(n: Notif) {
     if (n.type === "TRIP_REQUESTED") return "New trip request";
+    if (n.type === "LIVE_RIDE_OFFER") return "Live ride request";
     return n.type;
 }
 
 function makeBody(n: Notif) {
-    if (!n.trip) return "";
-    const parts = [n.trip.boat.name, n.trip.rumbo ?? undefined, `${n.trip.passengerCount} pax`, n.trip.createdBy.email].filter(Boolean);
-    return parts.join(" • ");
+    if (n.liveRide) {
+        const parts = [
+            n.liveRide.pickupPoint,
+            n.liveRide.rumbo ?? undefined,
+            `${n.liveRide.passengerCount} pax`,
+            `${n.liveRide.hours}h`,
+            n.liveRide.createdBy.email
+        ].filter(Boolean);
+        return parts.join(" • ");
+    }
+    if (n.trip) {
+        const parts = [n.trip.boat.name, n.trip.rumbo ?? undefined, `${n.trip.passengerCount} pax`, n.trip.createdBy.email].filter(Boolean);
+        return parts.join(" • ");
+    }
+    return "";
 }
 
 export function BrowserNotifications() {
