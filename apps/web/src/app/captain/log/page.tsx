@@ -112,6 +112,26 @@ export default async function CaptainLogPage() {
                 </a>
             </div>
 
+            {cap?.captain ? (
+                <div className={styles.cardWide}>
+                    <div className={styles.rowHead}>
+                        <div>
+                            <div className={styles.title}>Live rides</div>
+                            <div className={styles.meta}>
+                                {liveOn ? "On — you may receive on-the-spot ride offers." : "Off — turn on to receive on-the-spot ride offers."}
+                            </div>
+                        </div>
+                        <form method="POST" action="/api/captain/me/live-rides">
+                            <input type="hidden" name="enabled" value={liveOn ? "false" : "true"} />
+                            <input type="hidden" name="redirectTo" value="/captain/log" />
+                            <button className={`${styles.toggle} ${liveOn ? styles.toggleOn : ""}`} type="submit" aria-label="Toggle live rides">
+                                <span className={styles.knob} />
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            ) : null}
+
             <div className={styles.cardWide}>
                 <div className={styles.rowHead}>
                     <div>
@@ -130,23 +150,6 @@ export default async function CaptainLogPage() {
                 </div>
 
                 {notifs ? <NotificationsClient initialUnread={notifs.unreadCount} initialTopUnreadId={topUnreadId} /> : null}
-
-                {cap?.captain ? (
-                    <div className={styles.liveRow}>
-                        <div>
-                            <div className={styles.liveTitle}>Live rides</div>
-                            <div className={styles.meta}>
-                                {liveOn ? "On — you may receive on-the-spot ride offers." : "Off — turn on to receive on-the-spot ride offers."}
-                            </div>
-                        </div>
-                        <form method="POST" action="/api/captain/me/live-rides">
-                            <input type="hidden" name="enabled" value={liveOn ? "false" : "true"} />
-                            <button className={styles.secondary} type="submit">
-                                {liveOn ? "Turn off" : "Turn on"}
-                            </button>
-                        </form>
-                    </div>
-                ) : null}
 
                 {notifs?.notifications?.length ? (
                     <div className={styles.list}>
@@ -175,20 +178,7 @@ export default async function CaptainLogPage() {
                                         <div className={styles.itemMeta}>—</div>
                                     )}
                                 </div>
-                                {n.type === "LIVE_RIDE_OFFER" && n.liveRide && !n.readAt ? (
-                                    <div className={styles.actionsCol}>
-                                        <form method="POST" action={`/api/live-rides/${n.liveRide.id}/accept`}>
-                                            <button className={styles.primary} type="submit">
-                                                Accept
-                                            </button>
-                                        </form>
-                                        <form method="POST" action={`/api/live-rides/${n.liveRide.id}/reject`}>
-                                            <button className={styles.secondary} type="submit">
-                                                Reject
-                                            </button>
-                                        </form>
-                                    </div>
-                                ) : !n.readAt ? (
+                                {!n.readAt ? (
                                     <form method="POST" action={`/api/notifications/${n.id}/read`}>
                                         <button className={styles.secondary} type="submit">
                                             Mark read

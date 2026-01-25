@@ -57,3 +57,64 @@
     font-weight: 900;
     cursor: pointer;
 }
+
+.modalBackdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 220;
+    display: grid;
+    place-items: center;
+    padding: 18px;
+}
+
+.modalBackdropBtn {
+    position: absolute;
+    inset: 0;
+    border: none;
+    background: rgba(2, 8, 23, 0.35);
+    backdrop-filter: blur(2px);
+    cursor: pointer;
+}
+
+.modal {
+    position: relative;
+    z-index: 221;
+    width: min(520px, calc(100vw - 36px));
+    border-radius: 16px;
+    border: 1px solid rgba(15, 23, 42, 0.14);
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 24px 70px rgba(2, 8, 23, 0.25);
+    padding: 14px;
+    display: grid;
+    gap: 10px;
+}
+
+.modalTitle {
+    font-weight: 950;
+    letter-spacing: -0.2px;
+    font-size: 16px;
+}
+
+.modalMeta {
+    font-size: 12px;
+    opacity: 0.78;
+    font-weight: 750;
+    line-height: 1.35;
+}
+
+.modalActions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+}
+
+.danger {
+    padding: 9px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    background: rgba(254, 226, 226, 0.65);
+    font-weight: 950;
+    cursor: pointer;
+}

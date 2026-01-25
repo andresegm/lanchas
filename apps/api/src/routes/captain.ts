@@ -21,6 +21,17 @@ type LiveRidesToggleBody = {
     enabled?: boolean;
 };
 
+function truthy(v: unknown): boolean {
+    if (v === true) return true;
+    if (v === false) return false;
+    if (v === 1) return true;
+    if (v === 0) return false;
+    const s = String(v ?? "").toLowerCase().trim();
+    if (s === "true" || s === "1" || s === "yes" || s === "on") return true;
+    if (s === "false" || s === "0" || s === "no" || s === "off" || s === "") return false;
+    return Boolean(v);
+}
+
 type CreateBoatBody = {
     name?: string;
     maxPassengers?: number;
@@ -123,7 +134,7 @@ export const captainRoutes: FastifyPluginAsync = async (app) => {
     // Captain toggles live rides availability (MVP)
     app.post<{ Body: LiveRidesToggleBody }>("/captain/me/live-rides", async (req) => {
         const { captain } = await requireCaptain(app, req);
-        const enabled = !!req.body.enabled;
+        const enabled = truthy((req.body as any).enabled);
         const updated = await prisma.captain.update({
             where: { id: captain.id },
             data: { liveRidesOn: enabled }

@@ -8,16 +8,25 @@ export async function proxyJson(req: Request, targetPath: string) {
     }
 
     const url = new URL(targetPath, apiBase);
-    const body = req.method === "GET" || req.method === "HEAD" ? undefined : await req.text();
+    const bodyText = req.method === "GET" || req.method === "HEAD" ? "" : await req.text();
+    // Important: Fastify will try to JSON-parse when content-type is application/json.
+    // An empty string body with application/json causes a 400 parse error. Treat empty as "no body".
+    const body = bodyText ? bodyText : undefined;
+    const hasBody = body !== undefined;
 
     let res: Response;
     try {
+        const headers: Record<string, string> = {
+            cookie: req.headers.get("cookie") ?? ""
+        };
+        // Only set content-type if there's actually a body, or if the original request had one
+        if (hasBody || req.headers.get("content-type")) {
+            headers["content-type"] = req.headers.get("content-type") ?? "application/json";
+        }
+
         res = await fetch(url, {
             method: req.method,
-            headers: {
-                "content-type": req.headers.get("content-type") ?? "application/json",
-                cookie: req.headers.get("cookie") ?? ""
-            },
+            headers,
             body
         });
     } catch {

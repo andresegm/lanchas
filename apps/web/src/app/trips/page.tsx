@@ -56,7 +56,7 @@ export default async function TripsPage() {
                             </div>
                         </a>
 
-                        {t.status === "ACCEPTED" && !t.payment ? (
+                        {(t.status === "ACCEPTED" || t.status === "ACTIVE") && !t.payment ? (
                             <form method="POST" action={`/api/trips/${t.id}/pay`}>
                                 <button className={styles.primary} type="submit">
                                     Pay (stub)

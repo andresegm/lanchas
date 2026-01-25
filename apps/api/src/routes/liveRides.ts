@@ -151,7 +151,7 @@ export const liveRidesRoutes: FastifyPluginAsync = async (app) => {
         return { liveRide: created };
     });
 
-    // Captain accepts a live ride offer -> creates an ACCEPTED Trip immediately
+    // Captain accepts a live ride offer -> creates an ACTIVE Trip immediately (on-the-spot)
     app.post<{ Params: { id: string } }>("/live-rides/:id/accept", async (req) => {
         const { captain } = await requireCaptain(app, req);
         const now = new Date();
@@ -187,7 +187,7 @@ export const liveRidesRoutes: FastifyPluginAsync = async (app) => {
                 data: {
                     boatId: offer.boatId,
                     createdById: ride.createdById,
-                    status: TripStatus.ACCEPTED,
+                    status: TripStatus.ACTIVE,
                     startAt,
                     endAt,
                     passengerCount: ride.passengerCount,

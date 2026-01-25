@@ -328,7 +328,9 @@ export const tripsRoutes: FastifyPluginAsync = async (app) => {
         if (!trip) throw app.httpErrors.notFound("Trip not found");
         const isParticipant = trip.participants.some((p) => p.userId === payload.sub);
         if (!isParticipant) throw app.httpErrors.forbidden("Not your trip");
-        if (trip.status !== TripStatus.ACCEPTED) throw app.httpErrors.badRequest("Trip must be accepted before payment");
+        if (!([TripStatus.ACCEPTED, TripStatus.ACTIVE] as TripStatus[]).includes(trip.status)) {
+            throw app.httpErrors.badRequest("Trip must be accepted or active before payment");
+        }
 
         if (trip.payment) {
             return { payment: trip.payment };

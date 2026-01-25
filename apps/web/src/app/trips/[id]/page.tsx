@@ -59,7 +59,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
                 Status: <strong>{t.status}</strong> • Total: {formatUsdFromCents(t.totalCents)} {t.currency} • Payment:{" "}
                 {t.payment?.status ?? "NONE"}
             </div>
-            {t.status === "ACCEPTED" && !t.payment ? (
+            {(t.status === "ACCEPTED" || t.status === "ACTIVE") && !t.payment ? (
                 <form method="POST" action={`/api/trips/${t.id}/pay`}>
                     <button className={styles.secondary} type="submit">
                         Pay (stub)

@@ -4,11 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import styles from "./browserNotifications.module.css";
 
 type MeResponse = { user: { email: string; role: string } };
+type CaptainMeResponse = { captain: null | { liveRidesOn: boolean } };
 type Notif = {
     id: string;
     type: string;
     trip: null | { boat: { name: string }; passengerCount: number; rumbo: string | null; createdBy: { email: string } };
-    liveRide?: null | { pickupPoint: string; rumbo: string; passengerCount: number; hours: number; createdBy: { email: string } };
+    liveRide?: null | { id: string; pickupPoint: string; rumbo: string; passengerCount: number; hours: number; createdBy: { email: string } };
 };
 type NotificationsMeResponse = { unreadCount: number; notifications: Notif[] };
 
@@ -43,6 +44,7 @@ function makeBody(n: Notif) {
 export function BrowserNotifications() {
     const supports = typeof window !== "undefined" && "Notification" in window;
     const [role, setRole] = useState<string | null>(null);
+    const [liveOn, setLiveOn] = useState<boolean>(false);
     const [permission, setPermission] = useState<NotificationPermission>("default");
     const [dismissed, setDismissed] = useState<boolean>(() => {
         if (typeof window === "undefined") return false;
@@ -50,6 +52,8 @@ export function BrowserNotifications() {
     });
 
     const lastSeenRef = useRef<string | null>(null);
+    const [offerModal, setOfferModal] = useState<null | { notificationId: string; offer: Notif }>(null);
+    const inFlightRef = useRef(false);
 
     // Sync current browser permission (e.g. user enabled in browser settings)
     useEffect(() => {
@@ -85,6 +89,26 @@ export function BrowserNotifications() {
         };
     }, []);
 
+    // Load captain live rides toggle (so we only popup when live rides are enabled)
+    useEffect(() => {
+        if (!supports) return;
+        if (!isCaptainRole(role ?? undefined)) return;
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await fetch("/api/captain/me", { cache: "no-store" });
+                if (!res.ok) return;
+                const data = (await res.json()) as CaptainMeResponse;
+                if (!cancelled) setLiveOn(!!data.captain?.liveRidesOn);
+            } catch {
+                // ignore
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [supports, role]);
+
     // Poll notifications and show system notifications when enabled
     useEffect(() => {
         if (!supports) return;
@@ -104,6 +128,9 @@ export function BrowserNotifications() {
                     if (Notification.permission === "granted") {
                         new Notification(makeTitle(top), { body: makeBody(top) });
                     }
+                    if (liveOn && top.type === "LIVE_RIDE_OFFER" && top.liveRide) {
+                        setOfferModal({ notificationId: top.id, offer: top });
+                    }
                 }
             } catch {
                 // ignore
@@ -111,46 +138,105 @@ export function BrowserNotifications() {
         }, 20000);
 
         return () => window.clearInterval(id);
-    }, [supports, role]);
+    }, [supports, role, liveOn]);
 
     if (!supports) return null;
     if (!isCaptainRole(role ?? undefined)) return null;
-    if (permission === "granted") return null;
-    if (dismissed) return null;
+
+    async function acceptLiveRide() {
+        const lr = offerModal?.offer?.liveRide;
+        if (!lr?.id) return;
+        if (inFlightRef.current) return;
+        inFlightRef.current = true;
+        try {
+            const res = await fetch(`/api/live-rides/${lr.id}/accept-inline`, { method: "POST" });
+            if (!res.ok) {
+                const t = await res.text();
+                alert(t || "Failed to accept live ride");
+                return;
+            }
+            await fetch(`/api/notifications/${offerModal!.notificationId}/read`, { method: "POST" });
+            setOfferModal(null);
+            window.location.href = "/captain/trips";
+        } finally {
+            inFlightRef.current = false;
+        }
+    }
+
+    async function rejectLiveRide() {
+        const lr = offerModal?.offer?.liveRide;
+        if (!lr?.id) return;
+        if (inFlightRef.current) return;
+        inFlightRef.current = true;
+        try {
+            const res = await fetch(`/api/live-rides/${lr.id}/reject-inline`, { method: "POST" });
+            if (!res.ok) {
+                const t = await res.text();
+                alert(t || "Failed to reject live ride");
+                return;
+            }
+            await fetch(`/api/notifications/${offerModal!.notificationId}/read`, { method: "POST" });
+            setOfferModal(null);
+        } finally {
+            inFlightRef.current = false;
+        }
+    }
 
     return (
-        <div className={styles.wrap} role="status" aria-label="Enable browser notifications">
-            <div className={styles.text}>
-                <div className={styles.title}>Enable browser notifications?</div>
-                <div className={styles.meta}>Get a system alert when you receive a new trip request.</div>
-            </div>
-            <div className={styles.actions}>
-                <button
-                    className={styles.primary}
-                    type="button"
-                    onClick={async () => {
-                        try {
-                            const p = await Notification.requestPermission();
-                            setPermission(p);
-                        } catch {
-                            // ignore
-                        }
-                    }}
-                >
-                    Enable
-                </button>
-                <button
-                    className={styles.secondary}
-                    type="button"
-                    onClick={() => {
-                        setDismissed(true);
-                        window.localStorage.setItem("lanchas_notif_dismissed", "1");
-                    }}
-                >
-                    Not now
-                </button>
-            </div>
-        </div>
+        <>
+            {offerModal?.offer?.type === "LIVE_RIDE_OFFER" && offerModal.offer.liveRide ? (
+                <div className={styles.modalBackdrop} role="dialog" aria-label="Live ride offer">
+                    <button className={styles.modalBackdropBtn} type="button" aria-hidden="true" tabIndex={-1} />
+                    <div className={styles.modal}>
+                        <div className={styles.modalTitle}>Live ride request</div>
+                        <div className={styles.modalMeta}>{makeBody(offerModal.offer)}</div>
+                        <div className={styles.modalActions}>
+                            <button className={styles.primary} type="button" onClick={acceptLiveRide}>
+                                Accept
+                            </button>
+                            <button className={styles.danger} type="button" onClick={rejectLiveRide}>
+                                Reject
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
+
+            {permission !== "granted" && !dismissed ? (
+                <div className={styles.wrap} role="status" aria-label="Enable browser notifications">
+                    <div className={styles.text}>
+                        <div className={styles.title}>Enable browser notifications?</div>
+                        <div className={styles.meta}>Get a system alert when you receive a new trip request.</div>
+                    </div>
+                    <div className={styles.actions}>
+                        <button
+                            className={styles.primary}
+                            type="button"
+                            onClick={async () => {
+                                try {
+                                    const p = await Notification.requestPermission();
+                                    setPermission(p);
+                                } catch {
+                                    // ignore
+                                }
+                            }}
+                        >
+                            Enable
+                        </button>
+                        <button
+                            className={styles.secondary}
+                            type="button"
+                            onClick={() => {
+                                setDismissed(true);
+                                window.localStorage.setItem("lanchas_notif_dismissed", "1");
+                            }}
+                        >
+                            Not now
+                        </button>
+                    </div>
+                </div>
+            ) : null}
+        </>
     );
 }
 
