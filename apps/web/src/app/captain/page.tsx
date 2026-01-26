@@ -10,7 +10,6 @@ type CaptainMe = {
         displayName: string;
         bio: string | null;
         phone: string | null;
-        liveRidesOn: boolean;
         boats: Array<{
             id: string;
             name: string;
@@ -116,23 +115,6 @@ export default async function CaptainPage({
                             </div>
                         </div>
 
-                        <details className={styles.details}>
-                            <summary className={styles.summary}>
-                                <span>Live rides</span>
-                                <span className={styles.summaryHint}>{data.captain.liveRidesOn ? "On" : "Off"}</span>
-                            </summary>
-                            <div className={styles.detailsBody}>
-                                <div className={styles.p}>
-                                    When enabled, you may receive on-the-spot ride offers. This automatically turns off when you log out.
-                                </div>
-                                <form method="POST" action="/api/captain/me/live-rides" className={styles.form}>
-                                    <input type="hidden" name="enabled" value={data.captain.liveRidesOn ? "false" : "true"} />
-                                    <button className={data.captain.liveRidesOn ? styles.secondary : styles.primary} type="submit">
-                                        {data.captain.liveRidesOn ? "Turn off live rides" : "Turn on live rides"}
-                                    </button>
-                                </form>
-                            </div>
-                        </details>
 
                         <details className={styles.details}>
                             <summary className={styles.summary}>

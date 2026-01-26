@@ -7,7 +7,11 @@ import { NotificationsClient } from "./NotificationsClient";
 type CaptainMeResponse = {
     captain: null | {
         id: string;
-        liveRidesOn: boolean;
+        boats: Array<{
+            id: string;
+            name: string;
+            liveRidesOn: boolean;
+        }>;
     };
 };
 
@@ -94,7 +98,7 @@ function rumboLabel(r: string | null) {
 export default async function CaptainLogPage() {
     const notifs = await loadNotifications();
     const cap = await loadCaptainMe();
-    const liveOn = !!cap?.captain?.liveRidesOn;
+    const boats = cap?.captain?.boats ?? [];
     const topUnreadId = notifs?.notifications?.find((n) => !n.readAt)?.id ?? null;
     return (
         <div className={styles.wrap}>
@@ -112,23 +116,38 @@ export default async function CaptainLogPage() {
                 </a>
             </div>
 
-            {cap?.captain ? (
+            {cap?.captain && boats.length > 0 ? (
                 <div className={styles.cardWide}>
                     <div className={styles.rowHead}>
                         <div>
                             <div className={styles.title}>Live rides</div>
-                            <div className={styles.meta}>
-                                {liveOn ? "On — you may receive on-the-spot ride offers." : "Off — turn on to receive on-the-spot ride offers."}
-                            </div>
+                            <div className={styles.meta}>Enable live rides for specific boats to receive on-the-spot ride offers.</div>
                         </div>
-                        <form method="POST" action="/api/captain/me/live-rides">
-                            <input type="hidden" name="enabled" value={liveOn ? "false" : "true"} />
-                            <input type="hidden" name="redirectTo" value="/captain/log" />
-                            <button className={`${styles.toggle} ${liveOn ? styles.toggleOn : ""}`} type="submit" aria-label="Toggle live rides">
-                                <span className={styles.knob} />
-                            </button>
-                        </form>
                     </div>
+                    <div className={styles.boatList}>
+                        {boats.map((boat) => (
+                            <div key={boat.id} className={styles.boatRow}>
+                                <div>
+                                    <div className={styles.boatName}>{boat.name}</div>
+                                    <div className={styles.meta}>
+                                        {boat.liveRidesOn ? "On — receiving live ride offers" : "Off — not receiving live ride offers"}
+                                    </div>
+                                </div>
+                                <form method="POST" action="/api/captain/me/live-rides">
+                                    <input type="hidden" name="boatId" value={boat.id} />
+                                    <input type="hidden" name="enabled" value={boat.liveRidesOn ? "false" : "true"} />
+                                    <input type="hidden" name="redirectTo" value="/captain/log" />
+                                    <button className={`${styles.toggle} ${boat.liveRidesOn ? styles.toggleOn : ""}`} type="submit" aria-label={`Toggle live rides for ${boat.name}`}>
+                                        <span className={styles.knob} />
+                                    </button>
+                                </form>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            ) : cap?.captain ? (
+                <div className={styles.cardWide}>
+                    <div className={styles.meta}>Create a boat first to enable live rides.</div>
                 </div>
             ) : null}
 

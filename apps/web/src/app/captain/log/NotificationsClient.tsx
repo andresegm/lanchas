@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import styles from "./page.module.css";
 
 type Notif = {
@@ -34,40 +34,24 @@ export function NotificationsClient({ initialUnread, initialTopUnreadId }: { ini
         return Notification.permission;
     });
 
-    const lastSeenRef = useRef<string | null>(initialTopUnreadId);
-    const initialUnreadRef = useRef<number>(initialUnread);
-
     const supports = useMemo(() => typeof window !== "undefined" && "Notification" in window, []);
 
+    // Sync permission state when it changes (e.g., user enables in browser settings)
     useEffect(() => {
         if (!supports) return;
-        const id = window.setInterval(async () => {
-            try {
-                const res = await fetch("/api/notifications/me?unreadOnly=1&limit=1", { cache: "no-store" });
-                if (!res.ok) return;
-                const data = (await res.json()) as NotificationsMeResponse;
-                const top = data.notifications?.[0] ?? null;
-                if (!top) return;
-
-                const isNew = lastSeenRef.current !== top.id;
-                if (isNew) {
-                    lastSeenRef.current = top.id;
-                    // only notify if user has granted permission
-                    if (Notification.permission === "granted") {
-                        new Notification(makeTitle(top), { body: makeBody(top) });
-                    }
-                }
-
-                // reset initial unread baseline after first poll to avoid stale assumptions
-                if (initialUnreadRef.current !== data.unreadCount) {
-                    initialUnreadRef.current = data.unreadCount;
-                }
-            } catch {
-                // ignore
-            }
-        }, 20000);
-        return () => window.clearInterval(id);
+        const sync = () => setPermission(Notification.permission);
+        sync();
+        window.addEventListener("focus", sync);
+        document.addEventListener("visibilitychange", sync);
+        return () => {
+            window.removeEventListener("focus", sync);
+            document.removeEventListener("visibilitychange", sync);
+        };
     }, [supports]);
+
+    // Note: BrowserNotifications (in layout.tsx) handles system notifications globally.
+    // This component only displays the status and enable button.
+    // No polling/notification creation here to avoid duplicates.
 
     if (!supports) return null;
 

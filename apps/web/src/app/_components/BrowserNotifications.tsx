@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import styles from "./browserNotifications.module.css";
 
 type MeResponse = { user: { email: string; role: string } };
-type CaptainMeResponse = { captain: null | { liveRidesOn: boolean } };
+type CaptainMeResponse = { captain: null | { boats: Array<{ liveRidesOn: boolean }> } };
 type Notif = {
     id: string;
     type: string;
@@ -89,7 +89,7 @@ export function BrowserNotifications() {
         };
     }, []);
 
-    // Load captain live rides toggle (so we only popup when live rides are enabled)
+    // Load captain live rides toggle (so we only popup when any boat has live rides enabled)
     useEffect(() => {
         if (!supports) return;
         if (!isCaptainRole(role ?? undefined)) return;
@@ -99,7 +99,9 @@ export function BrowserNotifications() {
                 const res = await fetch("/api/captain/me", { cache: "no-store" });
                 if (!res.ok) return;
                 const data = (await res.json()) as CaptainMeResponse;
-                if (!cancelled) setLiveOn(!!data.captain?.liveRidesOn);
+                // Check if any boat has live rides enabled
+                const anyBoatLiveOn = data.captain?.boats?.some((b) => b.liveRidesOn) ?? false;
+                if (!cancelled) setLiveOn(anyBoatLiveOn);
             } catch {
                 // ignore
             }

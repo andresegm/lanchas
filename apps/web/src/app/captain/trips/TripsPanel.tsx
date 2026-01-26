@@ -169,7 +169,7 @@ export function TripsPanel({ trips }: { trips: Trip[] }) {
                                 </div>
                             ) : null}
 
-                            {t.status === "ACCEPTED" ? (
+                            {(t.status === "ACCEPTED" || t.status === "ACTIVE") ? (
                                 <form method="POST" action={`/api/captain/trips/${t.id}/complete`}>
                                     <button className={styles.secondary} type="submit">
                                         Mark completed
@@ -246,6 +246,13 @@ export function TripsPanel({ trips }: { trips: Trip[] }) {
                                         </button>
                                     </form>
                                 </>
+                            ) : null}
+                            {(openTrip.status === "ACCEPTED" || openTrip.status === "ACTIVE") ? (
+                                <form method="POST" action={`/api/captain/trips/${openTrip.id}/complete`}>
+                                    <button className={styles.secondary} type="submit">
+                                        Mark completed
+                                    </button>
+                                </form>
                             ) : null}
                             <button className={styles.secondary} type="button" onClick={() => setOpenTripId(null)}>
                                 Close

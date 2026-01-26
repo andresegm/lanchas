@@ -29,10 +29,10 @@ async function pickNextCaptainOffer(args: {
 }) {
     const captains = await prisma.captain.findMany({
         where: {
-            liveRidesOn: true,
             id: { notIn: args.excludeCaptainIds.length ? args.excludeCaptainIds : undefined },
             boats: {
                 some: {
+                    liveRidesOn: true,
                     maxPassengers: { gte: args.passengerCount },
                     rumboPricings: { some: { rumbo: args.rumbo } },
                     trips: {
@@ -51,6 +51,7 @@ async function pickNextCaptainOffer(args: {
             userId: true,
             boats: {
                 where: {
+                    liveRidesOn: true,
                     maxPassengers: { gte: args.passengerCount },
                     rumboPricings: { some: { rumbo: args.rumbo } },
                     trips: {

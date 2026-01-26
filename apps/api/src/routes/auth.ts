@@ -129,7 +129,8 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
             });
             // Live rides should be off when a captain logs out (MVP behavior).
             if (token?.userId) {
-                await prisma.captain.updateMany({ where: { userId: token.userId }, data: { liveRidesOn: false } });
+                // Turn off live rides for all boats owned by this captain
+                await prisma.boat.updateMany({ where: { captain: { userId: token.userId } }, data: { liveRidesOn: false } });
             }
         }
         clearAuthCookies(reply);

@@ -19,6 +19,7 @@ type UpdateCaptainBody = {
 
 type LiveRidesToggleBody = {
     enabled?: boolean;
+    boatId?: string;
 };
 
 function truthy(v: unknown): boolean {
@@ -131,15 +132,27 @@ export const captainRoutes: FastifyPluginAsync = async (app) => {
         return { captain: updated };
     });
 
-    // Captain toggles live rides availability (MVP)
+    // Captain toggles live rides availability for a specific boat
     app.post<{ Body: LiveRidesToggleBody }>("/captain/me/live-rides", async (req) => {
         const { captain } = await requireCaptain(app, req);
         const enabled = truthy((req.body as any).enabled);
-        const updated = await prisma.captain.update({
-            where: { id: captain.id },
-            data: { liveRidesOn: enabled }
+        const boatId = String((req.body as any).boatId ?? "").trim();
+        if (!boatId) throw app.httpErrors.badRequest("boatId is required");
+
+        // Verify the boat belongs to this captain
+        const boat = await prisma.boat.findUnique({
+            where: { id: boatId },
+            select: { id: true, captainId: true }
         });
-        return { captain: updated };
+        if (!boat) throw app.httpErrors.notFound("Boat not found");
+        if (boat.captainId !== captain.id) throw app.httpErrors.forbidden("Not your boat");
+
+        const updated = await prisma.boat.update({
+            where: { id: boatId },
+            data: { liveRidesOn: enabled },
+            select: { id: true, name: true, liveRidesOn: true }
+        });
+        return { boat: updated };
     });
 
     app.post<{ Body: CreateBoatBody }>("/captain/boats", async (req) => {
