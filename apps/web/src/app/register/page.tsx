@@ -21,6 +21,21 @@ export default async function RegisterPage({
 
             <form className={styles.form} method="POST" action="/api/auth/register">
                 <label className={styles.label}>
+                    <span>First Name</span>
+                    <input className={styles.input} name="firstName" type="text" required autoComplete="given-name" />
+                </label>
+
+                <label className={styles.label}>
+                    <span>Last Name</span>
+                    <input className={styles.input} name="lastName" type="text" required autoComplete="family-name" />
+                </label>
+
+                <label className={styles.label}>
+                    <span>Date of Birth</span>
+                    <input className={styles.input} name="dateOfBirth" type="date" required autoComplete="bday" />
+                </label>
+
+                <label className={styles.label}>
                     <span>Email</span>
                     <input className={styles.input} name="email" type="email" required autoComplete="email" />
                 </label>

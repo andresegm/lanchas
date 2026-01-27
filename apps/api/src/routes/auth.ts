@@ -5,7 +5,7 @@ import { clearAuthCookies, REFRESH_COOKIE, setAccessCookie, setRefreshCookie } f
 import { hashPassword, randomToken, sha256Base64Url, verifyPassword } from "../auth/crypto.js";
 import { requireUser, signAccessToken } from "../auth/jwt.js";
 
-type AuthBody = { email?: string; password?: string };
+type AuthBody = { email?: string; password?: string; firstName?: string; lastName?: string; dateOfBirth?: string };
 
 function normalizeEmail(email: string) {
     return email.trim().toLowerCase();
@@ -21,10 +21,26 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
         const email = normalizeEmail(emailRaw);
         const passwordHash = await hashPassword(password);
 
+        const firstName = req.body.firstName?.trim();
+        const lastName = req.body.lastName?.trim();
+        if (!firstName || !lastName) throw app.httpErrors.badRequest("First name and last name are required");
+
+        const dateOfBirthRaw = req.body.dateOfBirth;
+        if (!dateOfBirthRaw) throw app.httpErrors.badRequest("Date of birth is required");
+        const dateOfBirth = new Date(dateOfBirthRaw);
+        if (Number.isNaN(dateOfBirth.getTime())) throw app.httpErrors.badRequest("Invalid date of birth");
+
         let user: { id: string; role: "GUEST" | "CAPTAIN" | "BOTH"; email: string };
         try {
             user = await prisma.user.create({
-                data: { email, passwordHash, role: "GUEST" },
+                data: {
+                    email,
+                    passwordHash,
+                    role: "GUEST",
+                    firstName,
+                    lastName,
+                    dateOfBirth
+                },
                 select: { id: true, role: true, email: true }
             });
         } catch (err) {
