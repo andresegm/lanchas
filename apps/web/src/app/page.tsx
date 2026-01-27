@@ -55,10 +55,10 @@ export default async function HomePage() {
                         </a>
                     </div>
 
-                    <form className={styles.search} action="/boats" method="GET" suppressHydrationWarning>
+                    <form className={styles.search} action="/boats" method="GET">
                         <label className={`${styles.seg} ${styles.segTight}`}>
                             <div className={styles.segLabel}>Destino</div>
-                            <select className={styles.input} name="destino" defaultValue="" suppressHydrationWarning>
+                            <select className={styles.input} name="destino" defaultValue="">
                                 <option value="">Any</option>
                                 <option value="Las Borrachas">Las Borrachas</option>
                                 <option value="Puinare">Puinare</option>
@@ -76,17 +76,17 @@ export default async function HomePage() {
                         <div className={styles.divider} />
                         <label className={`${styles.seg} ${styles.segTight}`}>
                             <div className={styles.segLabel}>Passengers</div>
-                            <input className={styles.input} name="pax" type="number" min={1} placeholder="6" suppressHydrationWarning />
+                            <input className={styles.input} name="pax" type="number" min={1} placeholder="6" />
                         </label>
                         <div className={styles.divider} />
                         <label className={styles.seg}>
                             <div className={styles.segLabel}>Date</div>
-                            <input className={styles.input} name="date" type="date" suppressHydrationWarning />
+                            <input className={styles.input} name="date" type="date" />
                         </label>
                         <div className={styles.divider} />
                         <label className={styles.seg}>
                             <div className={styles.segLabel}>Start</div>
-                            <input className={styles.input} name="startTime" type="time" suppressHydrationWarning />
+                            <input className={styles.input} name="startTime" type="time" />
                         </label>
                         <div className={styles.divider} />
                         <label className={styles.seg}>
@@ -98,13 +98,12 @@ export default async function HomePage() {
                                 min={1}
                                 step={1}
                                 placeholder="4"
-                                suppressHydrationWarning
                             />
                         </label>
                         <div className={styles.divider} />
                         <label className={styles.seg}>
                             <div className={styles.segLabel}>Max $/hr</div>
-                            <input className={styles.input} name="maxPrice" type="number" min={1} step={1} placeholder="120" suppressHydrationWarning />
+                            <input className={styles.input} name="maxPrice" type="number" min={1} step={1} placeholder="120" />
                         </label>
                         <button className={styles.searchBtn} type="submit">
                             Search

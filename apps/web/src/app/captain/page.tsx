@@ -130,7 +130,6 @@ export default async function CaptainPage({
                                             name="displayName"
                                             defaultValue={data.captain.displayName}
                                             required
-                                            suppressHydrationWarning
                                         />
                                     </label>
                                     <label className={styles.label}>
@@ -140,12 +139,11 @@ export default async function CaptainPage({
                                             name="bio"
                                             rows={3}
                                             defaultValue={data.captain.bio ?? ""}
-                                            suppressHydrationWarning
                                         />
                                     </label>
                                     <label className={styles.label}>
                                         <span>Phone (optional)</span>
-                                        <input className={styles.input} name="phone" defaultValue={data.captain.phone ?? ""} suppressHydrationWarning />
+                                        <input className={styles.input} name="phone" defaultValue={data.captain.phone ?? ""} />
                                     </label>
                                     <button className={styles.secondary} type="submit">
                                         Save profile
@@ -166,7 +164,7 @@ export default async function CaptainPage({
                                 <form className={styles.form} method="POST" action="/api/captain/boats/create">
                                     <label className={styles.label}>
                                         <span>Name</span>
-                                        <input className={styles.input} name="name" required suppressHydrationWarning />
+                                        <input className={styles.input} name="name" required />
                                     </label>
                                     <div className={`${styles.row} ${styles.rowTight}`}>
                                         <label className={styles.label}>
@@ -177,7 +175,6 @@ export default async function CaptainPage({
                                                 type="number"
                                                 min={1}
                                                 required
-                                                suppressHydrationWarning
                                             />
                                         </label>
                                         <label className={styles.label}>
@@ -188,7 +185,6 @@ export default async function CaptainPage({
                                                 type="number"
                                                 min={1}
                                                 required
-                                                suppressHydrationWarning
                                             />
                                         </label>
                                     </div>
@@ -226,7 +222,7 @@ export default async function CaptainPage({
                                                 <form className={styles.form} method="POST" action={`/api/captain/boats/${b.id}`}>
                                                     <label className={styles.label}>
                                                         <span>Boat name</span>
-                                                        <input className={styles.input} name="name" defaultValue={b.name} required suppressHydrationWarning />
+                                                        <input className={styles.input} name="name" defaultValue={b.name} required />
                                                     </label>
                                                     <button className={styles.secondary} type="submit">
                                                         Save boat name
@@ -248,7 +244,6 @@ export default async function CaptainPage({
                                                                     name="url"
                                                                     placeholder="https://..."
                                                                     required
-                                                                    suppressHydrationWarning
                                                                 />
                                                             </label>
                                                             <input type="hidden" name="sortOrder" value="0" />
@@ -265,7 +260,6 @@ export default async function CaptainPage({
                                                                     name="url"
                                                                     placeholder="https://..."
                                                                     required
-                                                                    suppressHydrationWarning
                                                                 />
                                                             </label>
                                                             <button className={styles.secondary} type="submit">
@@ -327,7 +321,6 @@ export default async function CaptainPage({
                                                                                 step={0.01}
                                                                                 placeholder="USD/hr"
                                                                                 defaultValue={rp1 ? (rp1.hourlyRateCents / 100).toFixed(2) : ""}
-                                                                                suppressHydrationWarning
                                                                             />
                                                                         </label>
                                                                         <label className={styles.label}>
@@ -340,7 +333,6 @@ export default async function CaptainPage({
                                                                                 step={0.01}
                                                                                 placeholder="USD/hr"
                                                                                 defaultValue={rp2 ? (rp2.hourlyRateCents / 100).toFixed(2) : ""}
-                                                                                suppressHydrationWarning
                                                                             />
                                                                         </label>
                                                                         <label className={styles.label}>
@@ -353,7 +345,6 @@ export default async function CaptainPage({
                                                                                 step={0.01}
                                                                                 placeholder="USD/hr"
                                                                                 defaultValue={rp3 ? (rp3.hourlyRateCents / 100).toFixed(2) : ""}
-                                                                                suppressHydrationWarning
                                                                             />
                                                                         </label>
                                                                         <button className={styles.secondary} type="submit">
