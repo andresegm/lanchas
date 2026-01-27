@@ -55,7 +55,7 @@ export const boatsRoutes: FastifyPluginAsync = async (app) => {
         tigrillo: Rumbo.RUMBO_3
     };
 
-    app.get<{ Querystring: { rumbos?: unknown; destino?: string; pax?: unknown; maxPrice?: unknown; startAt?: string; endAt?: string } }>(
+    app.get<{ Querystring: { rumbos?: unknown; destino?: string; pax?: unknown; maxPrice?: unknown; startAt?: string; endAt?: string; limit?: unknown; offset?: unknown } }>(
         "/boats",
         async (req) => {
             const rumbosRaw = Array.isArray(req.query.rumbos) ? req.query.rumbos.join(",") : String(req.query.rumbos ?? "");
@@ -111,16 +111,27 @@ export const boatsRoutes: FastifyPluginAsync = async (app) => {
                     : {})
             };
 
-            const boats = await prisma.boat.findMany({
-                where: Object.keys(where).length ? where : undefined,
-                include: {
-                    captain: { select: { id: true, displayName: true } },
-                    pricings: { where: { activeTo: null }, orderBy: { activeFrom: "desc" } },
-                    rumboPricings: { orderBy: { rumbo: "asc" } },
-                    photos: { orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }], take: 5 }
-                },
-                orderBy: { createdAt: "desc" }
-            });
+            // Pagination
+            const limit = Math.max(1, Math.min(100, Number(req.query.limit ?? 20) || 20));
+            const offset = Math.max(0, Number(req.query.offset ?? 0) || 0);
+
+            const [boats, totalCount] = await Promise.all([
+                prisma.boat.findMany({
+                    where: Object.keys(where).length ? where : undefined,
+                    include: {
+                        captain: { select: { id: true, displayName: true } },
+                        pricings: { where: { activeTo: null }, orderBy: { activeFrom: "desc" } },
+                        rumboPricings: { orderBy: { rumbo: "asc" } },
+                        photos: { orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }], take: 5 }
+                    },
+                    orderBy: { createdAt: "desc" },
+                    take: limit,
+                    skip: offset
+                }),
+                prisma.boat.count({
+                    where: Object.keys(where).length ? where : undefined
+                })
+            ]);
 
             // Ratings: use CAPTAIN reviews as the source of truth.
             // - Boat rating: avg rating for CAPTAIN reviews on trips for that boat
@@ -170,7 +181,13 @@ export const boatsRoutes: FastifyPluginAsync = async (app) => {
                         ...b.captain,
                         rating: captainRatingById.get(b.captain.id) ?? { avg: null, count: 0 }
                     }
-                }))
+                })),
+                pagination: {
+                    total: totalCount,
+                    limit,
+                    offset,
+                    hasMore: offset + boats.length < totalCount
+                }
             };
         }
     );

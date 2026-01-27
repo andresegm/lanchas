@@ -350,47 +350,82 @@ export const tripsRoutes: FastifyPluginAsync = async (app) => {
     });
 
     // Lists
-    app.get("/trips/me", async (req) => {
+    app.get<{ Querystring: { limit?: unknown; offset?: unknown } }>("/trips/me", async (req) => {
         const payload = await requireAuthed(app, req);
-        const trips = await prisma.trip.findMany({
-            where: {
-                OR: [{ createdById: payload.sub }, { participants: { some: { userId: payload.sub } } }]
-            },
-            include: {
-                boat: { select: { id: true, name: true } },
-                payment: true
-            },
-            orderBy: { createdAt: "desc" }
-        });
-        return { trips };
+        const limit = Math.max(1, Math.min(100, Number(req.query.limit ?? 20) || 20));
+        const offset = Math.max(0, Number(req.query.offset ?? 0) || 0);
+
+        const where = {
+            OR: [{ createdById: payload.sub }, { participants: { some: { userId: payload.sub } } }]
+        };
+
+        const [trips, totalCount] = await Promise.all([
+            prisma.trip.findMany({
+                where,
+                include: {
+                    boat: { select: { id: true, name: true } },
+                    payment: true
+                },
+                orderBy: { createdAt: "desc" },
+                take: limit,
+                skip: offset
+            }),
+            prisma.trip.count({ where })
+        ]);
+
+        return {
+            trips,
+            pagination: {
+                total: totalCount,
+                limit,
+                offset,
+                hasMore: offset + trips.length < totalCount
+            }
+        };
     });
 
-    app.get("/trips/captain", async (req) => {
+    app.get<{ Querystring: { limit?: unknown; offset?: unknown } }>("/trips/captain", async (req) => {
         const { captain } = await requireCaptain(app, req);
-        const trips = await prisma.trip.findMany({
-            where: { boat: { captainId: captain.id } },
-            select: {
-                id: true,
-                status: true,
-                startAt: true,
-                endAt: true,
-                passengerCount: true,
-                notes: true,
-                pricingSnapshot: true,
-                currency: true,
-                totalCents: true,
-                boat: { select: { id: true, name: true } },
-                createdBy: { select: { id: true, email: true } },
-                payment: true
-            },
-            orderBy: { createdAt: "desc" }
-        });
+        const limit = Math.max(1, Math.min(100, Number(req.query.limit ?? 20) || 20));
+        const offset = Math.max(0, Number(req.query.offset ?? 0) || 0);
+
+        const where = { boat: { captainId: captain.id } };
+
+        const [trips, totalCount] = await Promise.all([
+            prisma.trip.findMany({
+                where,
+                select: {
+                    id: true,
+                    status: true,
+                    startAt: true,
+                    endAt: true,
+                    passengerCount: true,
+                    notes: true,
+                    pricingSnapshot: true,
+                    currency: true,
+                    totalCents: true,
+                    boat: { select: { id: true, name: true } },
+                    createdBy: { select: { id: true, email: true } },
+                    payment: true
+                },
+                orderBy: { createdAt: "desc" },
+                take: limit,
+                skip: offset
+            }),
+            prisma.trip.count({ where })
+        ]);
 
         return {
             trips: trips.map((t) => ({
                 ...t,
                 rumbo: (t.pricingSnapshot as any)?.rumbo ?? null
-            }))
+            })),
+            pagination: {
+                total: totalCount,
+                limit,
+                offset,
+                hasMore: offset + trips.length < totalCount
+            }
         };
     });
 };
