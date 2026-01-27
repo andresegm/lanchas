@@ -410,6 +410,18 @@
     font-size: 15px;
 }
 
+.completionHint {
+    margin-top: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: rgba(15, 23, 42, 0.05);
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    font-size: 12px;
+    font-weight: 800;
+    opacity: 0.85;
+    color: #0b1220;
+}
+
 @media (max-width: 520px) {
     .calendar {
         grid-template-columns: 1fr;

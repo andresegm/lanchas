@@ -267,11 +267,26 @@ export const tripsRoutes: FastifyPluginAsync = async (app) => {
     // Captain marks completed (enables reviews)
     app.post<{ Params: { id: string } }>("/trips/:id/complete", async (req) => {
         const { captain } = await requireCaptain(app, req);
-        const trip = await prisma.trip.findUnique({ where: { id: req.params.id }, select: { id: true, boatId: true } });
+        const trip = await prisma.trip.findUnique({
+            where: { id: req.params.id },
+            select: { id: true, boatId: true, endAt: true, status: true }
+        });
         if (!trip) throw app.httpErrors.notFound("Trip not found");
+        if (trip.status !== TripStatus.ACCEPTED && trip.status !== TripStatus.ACTIVE) {
+            throw app.httpErrors.badRequest("Trip must be ACCEPTED or ACTIVE to complete");
+        }
         const boat = await prisma.boat.findUnique({ where: { id: trip.boatId }, select: { captainId: true } });
         if (!boat) throw app.httpErrors.notFound("Boat not found");
         if (boat.captainId !== captain.id) throw app.httpErrors.forbidden("Not your trip");
+
+        // Check that current time is at least 2 hours before trip end time
+        const now = new Date();
+        const twoHoursBeforeEnd = new Date(trip.endAt.getTime() - 2 * 60 * 60 * 1000);
+        if (now < twoHoursBeforeEnd) {
+            throw app.httpErrors.badRequest(
+                `Trip cannot be completed until 2 hours before the scheduled end time. Earliest completion: ${twoHoursBeforeEnd.toISOString()}`
+            );
+        }
 
         const updated = await prisma.trip.update({
             where: { id: trip.id },

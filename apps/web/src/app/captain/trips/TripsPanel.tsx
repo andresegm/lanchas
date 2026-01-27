@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import styles from "./page.module.css";
 import { formatUsdFromCents } from "@/lib/money";
-import { caracasDayKey, formatCaracasRange, formatCaracasTime, formatCaracasWeekday } from "@/lib/datetime";
+import { caracasDayKey, formatCaracasDateTime, formatCaracasRange, formatCaracasTime, formatCaracasWeekday } from "@/lib/datetime";
 
 type Trip = {
     id: string;
@@ -176,13 +176,28 @@ export function TripsPanel({ trips }: { trips: Trip[] }) {
                                 </div>
                             ) : null}
 
-                            {(t.status === "ACCEPTED" || t.status === "ACTIVE") ? (
-                                <form method="POST" action={`/api/captain/trips/${t.id}/complete`}>
-                                    <button className={styles.secondary} type="submit">
-                                        Mark completed
-                                    </button>
-                                </form>
-                            ) : null}
+                            {(t.status === "ACCEPTED" || t.status === "ACTIVE") ? (() => {
+                                const now = new Date();
+                                const endAt = new Date(t.endAt);
+                                const twoHoursBeforeEnd = new Date(endAt.getTime() - 2 * 60 * 60 * 1000);
+                                const canComplete = now >= twoHoursBeforeEnd;
+
+                                if (canComplete) {
+                                    return (
+                                        <form method="POST" action={`/api/captain/trips/${t.id}/complete`}>
+                                            <button className={styles.secondary} type="submit">
+                                                Mark completed
+                                            </button>
+                                        </form>
+                                    );
+                                } else {
+                                    return (
+                                        <div className={styles.completionHint}>
+                                            Can be completed starting {formatCaracasDateTime(twoHoursBeforeEnd.toISOString())}
+                                        </div>
+                                    );
+                                }
+                            })() : null}
 
                             {t.status === "COMPLETED" && !t.hasGuestReview ? (
                                 <details className={styles.reviewDetails}>
@@ -295,13 +310,28 @@ export function TripsPanel({ trips }: { trips: Trip[] }) {
                                     </form>
                                 </>
                             ) : null}
-                            {(openTrip.status === "ACCEPTED" || openTrip.status === "ACTIVE") ? (
-                                <form method="POST" action={`/api/captain/trips/${openTrip.id}/complete`}>
-                                    <button className={styles.secondary} type="submit">
-                                        Mark completed
-                                    </button>
-                                </form>
-                            ) : null}
+                            {(openTrip.status === "ACCEPTED" || openTrip.status === "ACTIVE") ? (() => {
+                                const now = new Date();
+                                const endAt = new Date(openTrip.endAt);
+                                const twoHoursBeforeEnd = new Date(endAt.getTime() - 2 * 60 * 60 * 1000);
+                                const canComplete = now >= twoHoursBeforeEnd;
+
+                                if (canComplete) {
+                                    return (
+                                        <form method="POST" action={`/api/captain/trips/${openTrip.id}/complete`}>
+                                            <button className={styles.secondary} type="submit">
+                                                Mark completed
+                                            </button>
+                                        </form>
+                                    );
+                                } else {
+                                    return (
+                                        <div className={styles.modalMeta}>
+                                            Can be completed starting {formatCaracasDateTime(twoHoursBeforeEnd.toISOString())}
+                                        </div>
+                                    );
+                                }
+                            })() : null}
 
                             {openTrip.status === "COMPLETED" && !openTrip.hasGuestReview ? (
                                 <details className={styles.reviewDetails}>

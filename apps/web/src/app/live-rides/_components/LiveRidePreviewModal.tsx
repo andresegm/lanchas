@@ -88,6 +88,15 @@ export function LiveRidePreviewModal({
                     </div>
                 </div>
 
+                <div className={styles.refundPolicy}>
+                    <div className={styles.refundTitle}>Cancellation & Refund Policy</div>
+                    <div className={styles.refundText}>
+                        <strong>100% refund</strong> if cancelled 48+ hours before trip start<br />
+                        <strong>50% refund</strong> if cancelled 24-48 hours before trip start<br />
+                        <strong>25% refund</strong> if cancelled within 24 hours of trip start
+                    </div>
+                </div>
+
                 <div className={styles.actions}>
                     <button className={styles.secondary} type="button" onClick={onCancel}>
                         Edit

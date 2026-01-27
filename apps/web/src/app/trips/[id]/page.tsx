@@ -83,11 +83,21 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
                 {t.payment?.status ?? "NONE"}
             </div>
             {(t.status === "ACCEPTED" || t.status === "ACTIVE") && !t.payment ? (
-                <form method="POST" action={`/api/trips/${t.id}/pay`}>
-                    <button className={styles.secondary} type="submit">
-                        Pay (stub)
-                    </button>
-                </form>
+                <>
+                    <div className={styles.refundPolicy}>
+                        <div className={styles.refundTitle}>Cancellation & Refund Policy</div>
+                        <div className={styles.refundText}>
+                            <strong>100% refund</strong> if cancelled 48+ hours before trip start<br />
+                            <strong>50% refund</strong> if cancelled 24-48 hours before trip start<br />
+                            <strong>25% refund</strong> if cancelled within 24 hours of trip start
+                        </div>
+                    </div>
+                    <form method="POST" action={`/api/trips/${t.id}/pay`}>
+                        <button className={styles.secondary} type="submit">
+                            Pay (stub)
+                        </button>
+                    </form>
+                </>
             ) : null}
             {t.notes ? <div className={styles.notes}>Notes: {t.notes}</div> : null}
 

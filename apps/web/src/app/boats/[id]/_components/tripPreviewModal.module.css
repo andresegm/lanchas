@@ -97,6 +97,32 @@
     color: #0b1220;
 }
 
+.refundPolicy {
+    margin-bottom: 16px;
+    padding: 12px;
+    border-radius: 10px;
+    background: rgba(15, 23, 42, 0.03);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.refundTitle {
+    font-size: 13px;
+    font-weight: 900;
+    margin-bottom: 6px;
+    color: #0b1220;
+}
+
+.refundText {
+    font-size: 12px;
+    line-height: 1.5;
+    opacity: 0.85;
+    font-weight: 700;
+}
+
+.refundText strong {
+    font-weight: 900;
+}
+
 .actions {
     display: flex;
     gap: 10px;
