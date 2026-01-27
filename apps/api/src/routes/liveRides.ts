@@ -20,6 +20,82 @@ function durationHoursCeil(startAt: Date, endAt: Date): number {
     return Math.ceil(ms / (1000 * 60 * 60));
 }
 
+const LIVE_RIDE_OFFER_TIMEOUT_MS = 60 * 1000; // 60 seconds
+
+export async function checkAndExpireOffers() {
+    const expiredCutoff = new Date(Date.now() - LIVE_RIDE_OFFER_TIMEOUT_MS);
+    const expiredOffers = await prisma.liveRideOffer.findMany({
+        where: {
+            status: LiveRideOfferStatus.OFFERED,
+            createdAt: { lt: expiredCutoff }
+        },
+        include: {
+            request: {
+                include: {
+                    offers: { select: { captainId: true } }
+                }
+            }
+        }
+    });
+
+    for (const offer of expiredOffers) {
+        const ride = offer.request;
+        if (ride.status !== LiveRideStatus.OFFERED) continue;
+        if (ride.offeredToCaptainId !== offer.captainId) continue;
+
+        const now = new Date();
+        const startAt = now;
+        const endAt = new Date(startAt.getTime() + ride.hours * 60 * 60 * 1000);
+
+        const already = Array.from(new Set([...(ride.offers?.map((o) => o.captainId) ?? []), offer.captainId]));
+
+        const next = await pickNextCaptainOffer({
+            rumbo: ride.rumbo,
+            passengerCount: ride.passengerCount,
+            startAt,
+            endAt,
+            excludeCaptainIds: already
+        });
+
+        await prisma.$transaction(async (tx) => {
+            await tx.liveRideOffer.update({
+                where: { id: offer.id },
+                data: { status: LiveRideOfferStatus.REJECTED }
+            });
+
+            if (!next) {
+                await tx.liveRideRequest.update({
+                    where: { id: ride.id },
+                    data: { status: LiveRideStatus.REQUESTED, offeredToCaptainId: null }
+                });
+                return;
+            }
+
+            await tx.liveRideOffer.create({
+                data: {
+                    requestId: ride.id,
+                    captainId: next.captainId,
+                    boatId: next.boatId,
+                    status: LiveRideOfferStatus.OFFERED
+                }
+            });
+
+            await tx.liveRideRequest.update({
+                where: { id: ride.id },
+                data: { status: LiveRideStatus.OFFERED, offeredToCaptainId: next.captainId }
+            });
+
+            await tx.notification.create({
+                data: {
+                    userId: next.captainUserId,
+                    type: NotificationType.LIVE_RIDE_OFFER,
+                    liveRideRequestId: ride.id
+                }
+            });
+        });
+    }
+}
+
 async function pickNextCaptainOffer(args: {
     rumbo: Rumbo;
     passengerCount: number;
@@ -27,6 +103,61 @@ async function pickNextCaptainOffer(args: {
     endAt: Date;
     excludeCaptainIds: string[];
 }) {
+    // Dev: Prioritize specific captain email if they have live rides enabled
+    const DEV_PRIORITY_EMAIL = "andresegm@gmail.com";
+
+    // First, try to find the dev priority captain if not excluded
+    if (!args.excludeCaptainIds.some((id) => {
+        // We'll check by email, so we need to find the captain first
+        return false; // Will check below
+    })) {
+        const priorityCaptain = await prisma.captain.findFirst({
+            where: {
+                user: { email: DEV_PRIORITY_EMAIL },
+                boats: {
+                    some: {
+                        liveRidesOn: true,
+                        maxPassengers: { gte: args.passengerCount },
+                        rumboPricings: { some: { rumbo: args.rumbo } },
+                        trips: {
+                            none: {
+                                status: { in: [TripStatus.ACCEPTED, TripStatus.ACTIVE] },
+                                startAt: { lt: args.endAt },
+                                endAt: { gt: args.startAt }
+                            }
+                        }
+                    }
+                }
+            },
+            select: {
+                id: true,
+                userId: true,
+                boats: {
+                    where: {
+                        liveRidesOn: true,
+                        maxPassengers: { gte: args.passengerCount },
+                        rumboPricings: { some: { rumbo: args.rumbo } },
+                        trips: {
+                            none: {
+                                status: { in: [TripStatus.ACCEPTED, TripStatus.ACTIVE] },
+                                startAt: { lt: args.endAt },
+                                endAt: { gt: args.startAt }
+                            }
+                        }
+                    },
+                    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+                    select: { id: true },
+                    take: 1
+                }
+            }
+        });
+
+        if (priorityCaptain && !args.excludeCaptainIds.includes(priorityCaptain.id) && priorityCaptain.boats[0]) {
+            return { captainId: priorityCaptain.id, captainUserId: priorityCaptain.userId, boatId: priorityCaptain.boats[0].id };
+        }
+    }
+
+    // Otherwise, use normal selection logic
     const captains = await prisma.captain.findMany({
         where: {
             id: { notIn: args.excludeCaptainIds.length ? args.excludeCaptainIds : undefined },
@@ -101,6 +232,9 @@ export const liveRidesRoutes: FastifyPluginAsync = async (app) => {
         const commissionCents = Math.round(subtotalCents * commissionRate);
         const totalCents = subtotalCents + commissionCents;
 
+        // Check for expired offers before creating new request
+        await checkAndExpireOffers();
+
         const offer = await pickNextCaptainOffer({
             rumbo,
             passengerCount,
@@ -154,6 +288,9 @@ export const liveRidesRoutes: FastifyPluginAsync = async (app) => {
 
     // Captain accepts a live ride offer -> creates an ACTIVE Trip immediately (on-the-spot)
     app.post<{ Params: { id: string } }>("/live-rides/:id/accept", async (req) => {
+        // Check for expired offers before processing
+        await checkAndExpireOffers();
+
         const { captain } = await requireCaptain(app, req);
         const now = new Date();
 
@@ -221,6 +358,9 @@ export const liveRidesRoutes: FastifyPluginAsync = async (app) => {
 
     // Captain rejects -> offer next eligible captain (one at a time)
     app.post<{ Params: { id: string } }>("/live-rides/:id/reject", async (req) => {
+        // Check for expired offers before processing
+        await checkAndExpireOffers();
+
         const { captain } = await requireCaptain(app, req);
         const ride = await prisma.liveRideRequest.findUnique({
             where: { id: req.params.id },

@@ -14,7 +14,7 @@ type CaptainTripsResponse = {
         currency: string;
         totalCents: number;
         boat: { name: string };
-        createdBy: { email: string };
+        createdBy: { firstName: string | null; rating: number | null; reviewCount: number };
         payment: null | { status: string };
     }>;
 };

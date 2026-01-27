@@ -71,12 +71,22 @@ export const tripsRoutes: FastifyPluginAsync = async (app) => {
             where: { id: req.params.id },
             include: {
                 boat: { select: { id: true, name: true, captainId: true } },
-                createdBy: { select: { id: true, email: true } },
+                createdBy: { select: { id: true, firstName: true } },
                 payment: true
             }
         });
         if (!trip) throw app.httpErrors.notFound("Trip not found");
         if (trip.boat.captainId !== captain.id) throw app.httpErrors.forbidden("Not your trip");
+
+        // Calculate user rating
+        const ratingData = await prisma.review.aggregate({
+            where: {
+                targetType: ReviewTargetType.GUEST,
+                trip: { createdById: trip.createdBy.id }
+            },
+            _avg: { rating: true },
+            _count: { rating: true }
+        });
 
         return {
             trip: {
@@ -90,7 +100,12 @@ export const tripsRoutes: FastifyPluginAsync = async (app) => {
                 currency: trip.currency,
                 totalCents: trip.totalCents,
                 boat: { id: trip.boat.id, name: trip.boat.name },
-                createdBy: trip.createdBy,
+                createdBy: {
+                    id: trip.createdBy.id,
+                    firstName: trip.createdBy.firstName,
+                    rating: ratingData._avg.rating ? Math.round(ratingData._avg.rating) : null,
+                    reviewCount: ratingData._count.rating
+                },
                 payment: trip.payment
             }
         };
@@ -423,7 +438,7 @@ export const tripsRoutes: FastifyPluginAsync = async (app) => {
                     currency: true,
                     totalCents: true,
                     boat: { select: { id: true, name: true } },
-                    createdBy: { select: { id: true, email: true } },
+                    createdBy: { select: { id: true, firstName: true } },
                     payment: true
                 },
                 orderBy: { createdAt: "desc" },
@@ -432,6 +447,27 @@ export const tripsRoutes: FastifyPluginAsync = async (app) => {
             }),
             prisma.trip.count({ where })
         ]);
+
+        // Calculate ratings for each user
+        const userIds = [...new Set(trips.map((t) => t.createdBy.id))];
+        const userRatings = await Promise.all(
+            userIds.map(async (userId) => {
+                const ratingData = await prisma.review.aggregate({
+                    where: {
+                        targetType: ReviewTargetType.GUEST,
+                        trip: { createdById: userId }
+                    },
+                    _avg: { rating: true },
+                    _count: { rating: true }
+                });
+                return {
+                    userId,
+                    rating: ratingData._avg.rating ? Math.round(ratingData._avg.rating) : null,
+                    reviewCount: ratingData._count.rating
+                };
+            })
+        );
+        const ratingMap = new Map(userRatings.map((r) => [r.userId, { rating: r.rating, reviewCount: r.reviewCount }]));
 
         return {
             trips: trips.map((t) => ({

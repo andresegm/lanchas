@@ -116,7 +116,8 @@ export function BrowserNotifications() {
         if (!supports) return;
         if (!isCaptainRole(role ?? undefined)) return;
 
-        const id = window.setInterval(async () => {
+        // Initial check immediately, then poll
+        const checkNotifications = async () => {
             try {
                 const res = await fetch("/api/notifications/me?unreadOnly=1&limit=1", { cache: "no-store" });
                 if (!res.ok) return;
@@ -130,14 +131,22 @@ export function BrowserNotifications() {
                     if (Notification.permission === "granted") {
                         new Notification(makeTitle(top), { body: makeBody(top) });
                     }
-                    if (liveOn && top.type === "LIVE_RIDE_OFFER" && top.liveRide) {
+                    // If a live ride offer notification exists, show the modal
+                    // The notification itself is proof the captain was offered the ride
+                    if (top.type === "LIVE_RIDE_OFFER" && top.liveRide) {
                         setOfferModal({ notificationId: top.id, offer: top });
                     }
                 }
             } catch {
                 // ignore
             }
-        }, 20000);
+        };
+
+        // Check immediately
+        checkNotifications();
+
+        // Then poll every 5 seconds (reduced from 20 for faster response)
+        const id = window.setInterval(checkNotifications, 5000);
 
         return () => window.clearInterval(id);
     }, [supports, role, liveOn]);

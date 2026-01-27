@@ -231,7 +231,7 @@ export const boatsRoutes: FastifyPluginAsync = async (app) => {
                     targetType: "CAPTAIN"
                 },
                 include: {
-                    author: { select: { email: true } },
+                    author: { select: { firstName: true } },
                     trip: { select: { boat: { select: { name: true } } } }
                 },
                 orderBy: { createdAt: "desc" },
@@ -244,7 +244,7 @@ export const boatsRoutes: FastifyPluginAsync = async (app) => {
             id: r.id,
             rating: r.rating,
             comment: r.comment,
-            authorEmail: r.author.email,
+            authorFirstName: r.author.firstName,
             boatName: r.trip.boat.name,
             createdAt: r.createdAt
         }));

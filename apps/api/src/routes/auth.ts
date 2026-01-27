@@ -157,9 +157,30 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
         const payload = await requireUser(app, req);
         const user = await prisma.user.findUnique({
             where: { id: payload.sub },
-            select: { id: true, email: true, role: true, createdAt: true }
+            select: { id: true, email: true, role: true, firstName: true, lastName: true, dateOfBirth: true, createdAt: true }
         });
         if (!user) throw app.httpErrors.unauthorized("Not authenticated");
+        return { user };
+    });
+
+    app.put<{ Body: { firstName?: string; lastName?: string; dateOfBirth?: string } }>("/auth/me", async (req) => {
+        const payload = await requireUser(app, req);
+
+        const firstName = req.body.firstName?.trim() || null;
+        const lastName = req.body.lastName?.trim() || null;
+        let dateOfBirth: Date | null = null;
+        if (req.body.dateOfBirth) {
+            const dob = new Date(req.body.dateOfBirth);
+            if (!Number.isNaN(dob.getTime())) {
+                dateOfBirth = dob;
+            }
+        }
+
+        const user = await prisma.user.update({
+            where: { id: payload.sub },
+            data: { firstName, lastName, dateOfBirth },
+            select: { id: true, email: true, role: true, firstName: true, lastName: true, dateOfBirth: true, createdAt: true }
+        });
         return { user };
     });
 };

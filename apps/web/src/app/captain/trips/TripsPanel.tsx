@@ -16,7 +16,7 @@ type Trip = {
     currency: string;
     totalCents: number;
     boat: { name: string };
-    createdBy: { email: string };
+    createdBy: { firstName: string | null; rating: number | null; reviewCount: number };
     payment: null | { status: string };
 };
 
@@ -146,7 +146,7 @@ export function TripsPanel({ trips }: { trips: Trip[] }) {
                                 <span className={`${styles.pill} ${statusColor(t, conflictingRequestedIds.has(t.id))}`}>{statusLabel(t)}</span>
                             </div>
                             <div className={styles.meta}>
-                                {t.createdBy.email} • {formatCaracasRange(t.startAt, t.endAt)}
+                                {t.createdBy.firstName ?? "Guest"} {t.createdBy.rating ? `(${t.createdBy.rating}★)` : ""} • {formatCaracasRange(t.startAt, t.endAt)}
                             </div>
                             <div className={styles.meta}>Passengers: {t.passengerCount ?? 1}</div>
                             <div className={styles.meta}>Rumbo: {rumboLabel(t.rumbo)}</div>
@@ -219,7 +219,7 @@ export function TripsPanel({ trips }: { trips: Trip[] }) {
                     <div className={styles.modal}>
                         <div className={styles.modalTitle}>{openTrip.boat.name}</div>
                         <div className={styles.modalMeta}>
-                            {openTrip.createdBy.email} • {formatCaracasRange(openTrip.startAt, openTrip.endAt)}
+                            {openTrip.createdBy.firstName ?? "Guest"} {openTrip.createdBy.rating ? `(${openTrip.createdBy.rating}★)` : ""} • {formatCaracasRange(openTrip.startAt, openTrip.endAt)}
                         </div>
                         <div className={styles.modalMeta}>Passengers: {openTrip.passengerCount ?? 1}</div>
                         <div className={styles.modalMeta}>Rumbo: {rumboLabel(openTrip.rumbo)}</div>

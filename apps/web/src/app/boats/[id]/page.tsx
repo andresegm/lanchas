@@ -22,7 +22,7 @@ type BoatResponse = {
                 id: string;
                 rating: number;
                 comment: string | null;
-                authorEmail: string;
+                authorFirstName: string | null;
                 boatName: string;
                 createdAt: string;
             }>;
@@ -99,7 +99,7 @@ export default async function BoatPage({ params }: { params: Promise<{ id: strin
                                 <li key={r.id} className={styles.reviewItem}>
                                     <div className={styles.reviewHeader}>
                                         <span className={styles.reviewRating}>{r.rating}/5 ★</span>
-                                        <span className={styles.reviewAuthor}>{r.authorEmail}</span>
+                                        <span className={styles.reviewAuthor}>{r.authorFirstName ?? "Anonymous"}</span>
                                         <span className={styles.reviewBoat}>{r.boatName}</span>
                                     </div>
                                     {r.comment ? <div className={styles.reviewComment}>{r.comment}</div> : null}

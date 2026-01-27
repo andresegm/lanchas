@@ -55,7 +55,7 @@ export async function proxyJson(req: Request, targetPath: string) {
 export async function proxyAuthForm(
     req: Request,
     targetPath: string,
-    opts?: { successRedirectTo?: string }
+    opts?: { successRedirectTo?: string; method?: string }
 ) {
     const apiBase = getApiBaseUrl();
     if (!apiBase) {
@@ -65,6 +65,7 @@ export async function proxyAuthForm(
     const contentType = req.headers.get("content-type") ?? "";
     let redirectTo = opts?.successRedirectTo ?? "/dashboard";
     let payload: Record<string, unknown> = {};
+    const method = opts?.method ?? req.method;
 
     if (contentType.includes("application/x-www-form-urlencoded") || contentType.includes("multipart/form-data")) {
         const fd = await req.formData();
@@ -84,7 +85,7 @@ export async function proxyAuthForm(
     let res: Response;
     try {
         res = await fetch(url, {
-            method: "POST",
+            method: method === "PUT" ? "PUT" : "POST",
             headers: {
                 "content-type": "application/json",
                 cookie: req.headers.get("cookie") ?? ""

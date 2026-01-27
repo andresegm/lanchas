@@ -3,7 +3,17 @@ import { redirect } from "next/navigation";
 import styles from "./page.module.css";
 import { getApiBaseUrl } from "@/lib/apiBase";
 
-type MeResponse = { user: { id: string; email: string; role: string; createdAt: string } };
+type MeResponse = {
+    user: {
+        id: string;
+        email: string;
+        role: string;
+        firstName: string | null;
+        lastName: string | null;
+        dateOfBirth: string | null;
+        createdAt: string;
+    };
+};
 
 export default async function ProfilePage() {
     const apiBase = getApiBaseUrl();
@@ -31,14 +41,63 @@ export default async function ProfilePage() {
             <h1 className={styles.h1}>Profile</h1>
             <p className={styles.p}>Account details.</p>
 
-            <div className={styles.kv}>
-                <div>
-                    <div className={styles.k}>Email</div>
-                    <div className={styles.v}>{data.user.email}</div>
-                </div>
-                <div>
-                    <div className={styles.k}>Role</div>
-                    <div className={styles.v}>{data.user.role}</div>
+            <div className={styles.section}>
+                <h2 className={styles.h2}>Personal Information</h2>
+                <form method="POST" action="/api/auth/me" className={styles.form}>
+                    <label className={styles.label}>
+                        <span>First Name</span>
+                        <input
+                            className={styles.input}
+                            name="firstName"
+                            type="text"
+                            defaultValue={data.user.firstName ?? ""}
+                            autoComplete="given-name"
+                        />
+                    </label>
+
+                    <label className={styles.label}>
+                        <span>Last Name</span>
+                        <input
+                            className={styles.input}
+                            name="lastName"
+                            type="text"
+                            defaultValue={data.user.lastName ?? ""}
+                            autoComplete="family-name"
+                        />
+                    </label>
+
+                    <label className={styles.label}>
+                        <span>Date of Birth</span>
+                        <input
+                            className={styles.input}
+                            name="dateOfBirth"
+                            type="date"
+                            defaultValue={
+                                data.user.dateOfBirth
+                                    ? new Date(data.user.dateOfBirth).toISOString().split("T")[0]
+                                    : ""
+                            }
+                            autoComplete="bday"
+                        />
+                    </label>
+
+                    <button className={styles.primary} type="submit">
+                        Save changes
+                    </button>
+                </form>
+            </div>
+
+            <div className={styles.section}>
+                <h2 className={styles.h2}>Account Information</h2>
+                <div className={styles.kv}>
+                    <div>
+                        <div className={styles.k}>Email</div>
+                        <div className={styles.v}>{data.user.email}</div>
+                    </div>
+                    <div>
+                        <div className={styles.k}>Role</div>
+                        <div className={styles.v}>{data.user.role}</div>
+                    </div>
                 </div>
             </div>
 

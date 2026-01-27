@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync } from "fastify";
-import { NotificationType, prisma } from "@lanchas/prisma";
+import { LiveRideOfferStatus, LiveRideStatus, NotificationType, TripStatus, prisma } from "@lanchas/prisma";
 import { requireAuthed } from "../auth/guards.js";
 
 function truthy(v: unknown): boolean {
@@ -9,8 +9,187 @@ function truthy(v: unknown): boolean {
     return s === "1" || s === "true" || s === "yes";
 }
 
+// Helper to check and expire old live ride offers (60 second timeout)
+async function checkAndExpireLiveRideOffers() {
+    const TIMEOUT_MS = 60 * 1000; // 60 seconds
+    const expiredCutoff = new Date(Date.now() - TIMEOUT_MS);
+
+    const expiredOffers = await prisma.liveRideOffer.findMany({
+        where: {
+            status: LiveRideOfferStatus.OFFERED,
+            createdAt: { lt: expiredCutoff }
+        },
+        include: {
+            request: {
+                include: {
+                    offers: { select: { captainId: true } },
+                    createdBy: { select: { id: true } }
+                }
+            },
+            captain: { select: { userId: true } }
+        }
+    });
+
+    for (const offer of expiredOffers) {
+        const ride = offer.request;
+        if (ride.status !== LiveRideStatus.OFFERED) continue;
+        if (ride.offeredToCaptainId !== offer.captainId) continue;
+
+        const now = new Date();
+        const startAt = now;
+        const endAt = new Date(startAt.getTime() + ride.hours * 60 * 60 * 1000);
+        const already = Array.from(new Set([...(ride.offers?.map((o) => o.captainId) ?? []), offer.captainId]));
+
+        // Find next eligible captain (dev: prioritize andresegm@gmail.com)
+        const DEV_PRIORITY_EMAIL = "andresegm@gmail.com";
+
+        // First try dev priority captain if not excluded
+        let nextCaptains: Array<{ id: string; userId: string; boats: Array<{ id: string }> }> = [];
+        if (!already.some((id) => {
+            // Check if dev captain is excluded by trying to find them first
+            return false; // Will check below
+        })) {
+            const priorityCaptain = await prisma.captain.findFirst({
+                where: {
+                    user: { email: DEV_PRIORITY_EMAIL },
+                    id: { notIn: already.length ? already : undefined },
+                    boats: {
+                        some: {
+                            liveRidesOn: true,
+                            maxPassengers: { gte: ride.passengerCount },
+                            rumboPricings: { some: { rumbo: ride.rumbo } },
+                            trips: {
+                                none: {
+                                    status: { in: [TripStatus.ACCEPTED, TripStatus.ACTIVE] },
+                                    startAt: { lt: endAt },
+                                    endAt: { gt: startAt }
+                                }
+                            }
+                        }
+                    }
+                },
+                select: {
+                    id: true,
+                    userId: true,
+                    boats: {
+                        where: {
+                            liveRidesOn: true,
+                            maxPassengers: { gte: ride.passengerCount },
+                            rumboPricings: { some: { rumbo: ride.rumbo } },
+                            trips: {
+                                none: {
+                                    status: { in: [TripStatus.ACCEPTED, TripStatus.ACTIVE] },
+                                    startAt: { lt: endAt },
+                                    endAt: { gt: startAt }
+                                }
+                            }
+                        },
+                        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+                        select: { id: true },
+                        take: 1
+                    }
+                }
+            });
+
+            if (priorityCaptain && priorityCaptain.boats[0]) {
+                nextCaptains = [priorityCaptain];
+            }
+        }
+
+        // If no priority captain found, use normal selection
+        if (nextCaptains.length === 0) {
+            nextCaptains = await prisma.captain.findMany({
+                where: {
+                    id: { notIn: already.length ? already : undefined },
+                    boats: {
+                        some: {
+                            liveRidesOn: true,
+                            maxPassengers: { gte: ride.passengerCount },
+                            rumboPricings: { some: { rumbo: ride.rumbo } },
+                            trips: {
+                                none: {
+                                    status: { in: [TripStatus.ACCEPTED, TripStatus.ACTIVE] },
+                                    startAt: { lt: endAt },
+                                    endAt: { gt: startAt }
+                                }
+                            }
+                        }
+                    }
+                },
+                orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+                select: {
+                    id: true,
+                    userId: true,
+                    boats: {
+                        where: {
+                            liveRidesOn: true,
+                            maxPassengers: { gte: ride.passengerCount },
+                            rumboPricings: { some: { rumbo: ride.rumbo } },
+                            trips: {
+                                none: {
+                                    status: { in: [TripStatus.ACCEPTED, TripStatus.ACTIVE] },
+                                    startAt: { lt: endAt },
+                                    endAt: { gt: startAt }
+                                }
+                            }
+                        },
+                        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+                        select: { id: true },
+                        take: 1
+                    }
+                },
+                take: 1
+            });
+        }
+
+        const next = nextCaptains[0];
+        const nextBoat = next?.boats[0];
+
+        await prisma.$transaction(async (tx) => {
+            await tx.liveRideOffer.update({
+                where: { id: offer.id },
+                data: { status: LiveRideOfferStatus.REJECTED }
+            });
+
+            if (!next || !nextBoat) {
+                await tx.liveRideRequest.update({
+                    where: { id: ride.id },
+                    data: { status: LiveRideStatus.REQUESTED, offeredToCaptainId: null }
+                });
+                return;
+            }
+
+            await tx.liveRideOffer.create({
+                data: {
+                    requestId: ride.id,
+                    captainId: next.id,
+                    boatId: nextBoat.id,
+                    status: LiveRideOfferStatus.OFFERED
+                }
+            });
+
+            await tx.liveRideRequest.update({
+                where: { id: ride.id },
+                data: { status: LiveRideStatus.OFFERED, offeredToCaptainId: next.id }
+            });
+
+            await tx.notification.create({
+                data: {
+                    userId: next.userId,
+                    type: NotificationType.LIVE_RIDE_OFFER,
+                    liveRideRequestId: ride.id
+                }
+            });
+        });
+    }
+}
+
 export const notificationsRoutes: FastifyPluginAsync = async (app) => {
     app.get("/notifications/me", async (req) => {
+        // Check for expired live ride offers when fetching notifications
+        // This ensures expired offers are cleaned up during the polling cycle (every 5 seconds)
+        await checkAndExpireLiveRideOffers();
+
         const payload = await requireAuthed(app, req);
         const q = (req.query ?? {}) as Record<string, unknown>;
         const unreadOnly = truthy(q.unreadOnly);
