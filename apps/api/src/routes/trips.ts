@@ -162,7 +162,7 @@ export const tripsRoutes: FastifyPluginAsync = async (app) => {
 
         const baseSubtotal = rumboPricing.hourlyRateCents * hours;
 
-        const commissionRate = 0.18;
+        const commissionRate = 0.07;
         const commissionCents = Math.round(baseSubtotal * commissionRate);
         const totalCents = baseSubtotal + commissionCents;
 
@@ -436,6 +436,7 @@ export const tripsRoutes: FastifyPluginAsync = async (app) => {
                     notes: true,
                     pricingSnapshot: true,
                     currency: true,
+                    subtotalCents: true,
                     totalCents: true,
                     boat: { select: { id: true, name: true } },
                     createdBy: { select: { id: true, firstName: true } },

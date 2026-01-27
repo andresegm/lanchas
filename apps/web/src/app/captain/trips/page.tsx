@@ -12,6 +12,7 @@ type CaptainTripsResponse = {
         startAt: string;
         endAt: string;
         currency: string;
+        subtotalCents?: number;
         totalCents: number;
         boat: { name: string };
         createdBy: { firstName: string | null; rating: number | null; reviewCount: number };

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { getApiBaseUrl } from "@/lib/apiBase";
 import styles from "./page.module.css";
 import { formatUsdFromCents } from "@/lib/money";
-import { AvailabilityPicker } from "./_components/AvailabilityPicker";
+import { TripRequestForm } from "./_components/TripRequestForm";
 
 type BoatResponse = {
     boat: {
@@ -137,46 +137,7 @@ export default async function BoatPage({ params }: { params: Promise<{ id: strin
                                     return `From ${formatUsdFromCents(min)} ${cur}/hr • min ${b.minimumHours}h`;
                                 })()}
                             </div>
-                            <form method="POST" action="/api/trips/create" className={styles.form}>
-                                <input type="hidden" name="boatId" value={b.id} />
-                                <input type="hidden" name="pricingType" value="PRIVATE_HOURLY" />
-
-                                <label className={styles.label}>
-                                    <span>Rumbo (route)</span>
-                                    <select className={styles.input} name="rumbo" required defaultValue="">
-                                        <option value="" disabled>
-                                            Select a rumbo
-                                        </option>
-                                        {b.rumboPricings.map((p) => (
-                                            <option key={p.id} value={p.rumbo}>
-                                                {rumboLabel(p.rumbo)} — {formatUsdFromCents(p.hourlyRateCents)} {p.currency}/hr
-                                            </option>
-                                        ))}
-                                    </select>
-                                </label>
-
-                                <label className={styles.label}>
-                                    <span>Passengers</span>
-                                    <input
-                                        className={styles.input}
-                                        name="passengerCount"
-                                        type="number"
-                                        min={1}
-                                        max={b.maxPassengers}
-                                        defaultValue={1}
-                                        required
-                                    />
-                                </label>
-
-                                <AvailabilityPicker boatId={b.id} />
-                                <label className={styles.label}>
-                                    <span>Notes (optional)</span>
-                                    <textarea className={styles.textarea} name="notes" rows={3} />
-                                </label>
-                                <button className={styles.primary} type="submit">
-                                    Request trip
-                                </button>
-                            </form>
+                            <TripRequestForm boat={b} />
                         </>
                     ) : (
                         <p className={styles.dim}>This boat has no rumbos pricing configured yet.</p>

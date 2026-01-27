@@ -28,6 +28,7 @@ type NotificationsMeResponse = {
             endAt: string;
             passengerCount: number;
             rumbo: string | null;
+            subtotalCents: number;
             boat: { id: string; name: string };
             createdBy: { id: string; firstName: string | null };
         };
@@ -38,6 +39,7 @@ type NotificationsMeResponse = {
             passengerCount: number;
             hours: number;
             currency: string;
+            subtotalCents: number;
             totalCents: number;
             createdBy: { id: string; firstName: string | null };
         };
@@ -184,15 +186,29 @@ export default async function CaptainLogPage() {
                                         {n.readAt ? null : <span className={styles.dot} aria-label="Unread" />}
                                     </div>
                                     {n.liveRide ? (
-                                        <div className={styles.itemMeta}>
-                                            {n.liveRide.pickupPoint} • {rumboLabel(n.liveRide.rumbo)} • {n.liveRide.passengerCount} pax •{" "}
-                                            {n.liveRide.hours}h • {n.liveRide.createdBy.firstName ?? "Guest"}
-                                        </div>
+                                        <>
+                                            <div className={styles.itemMeta}>
+                                                {n.liveRide.pickupPoint} • {rumboLabel(n.liveRide.rumbo)} • {n.liveRide.passengerCount} pax •{" "}
+                                                {n.liveRide.hours}h • {n.liveRide.createdBy.firstName ?? "Guest"}
+                                            </div>
+                                            {n.liveRide.subtotalCents !== undefined ? (
+                                                <div className={styles.itemEarnings}>
+                                                    Your earnings: <strong>${((n.liveRide.subtotalCents * 0.8) / 100).toFixed(2)}</strong> {n.liveRide.currency} (80% of subtotal) + tips
+                                                </div>
+                                            ) : null}
+                                        </>
                                     ) : n.trip ? (
-                                        <div className={styles.itemMeta}>
-                                            {n.trip.boat.name} • {rumboLabel(n.trip.rumbo)} • {n.trip.passengerCount} pax •{" "}
-                                            {formatCaracasRange(n.trip.startAt, n.trip.endAt)} • {n.trip.createdBy.firstName ?? "Guest"}
-                                        </div>
+                                        <>
+                                            <div className={styles.itemMeta}>
+                                                {n.trip.boat.name} • {rumboLabel(n.trip.rumbo)} • {n.trip.passengerCount} pax •{" "}
+                                                {formatCaracasRange(n.trip.startAt, n.trip.endAt)} • {n.trip.createdBy.firstName ?? "Guest"}
+                                            </div>
+                                            {n.trip.subtotalCents !== undefined ? (
+                                                <div className={styles.itemEarnings}>
+                                                    Your earnings: <strong>${((n.trip.subtotalCents * 0.8) / 100).toFixed(2)}</strong> USD (80% of subtotal) + tips
+                                                </div>
+                                            ) : null}
+                                        </>
                                     ) : (
                                         <div className={styles.itemMeta}>—</div>
                                     )}

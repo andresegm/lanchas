@@ -14,6 +14,7 @@ type Trip = {
     passengerCount?: number;
     notes?: string | null;
     currency: string;
+    subtotalCents?: number;
     totalCents: number;
     boat: { name: string };
     createdBy: { firstName: string | null; rating: number | null; reviewCount: number };
@@ -154,6 +155,11 @@ export function TripsPanel({ trips }: { trips: Trip[] }) {
                             <div className={styles.meta}>
                                 Total: {formatUsdFromCents(t.totalCents)} {t.currency} • Payment: {t.payment?.status ?? "NONE"}
                             </div>
+                            {t.subtotalCents !== undefined ? (
+                                <div className={styles.earnings}>
+                                    Your earnings: <strong>{formatUsdFromCents(Math.round(t.subtotalCents * 0.8))}</strong> {t.currency} (80% of subtotal) + tips
+                                </div>
+                            ) : null}
 
                             {t.status === "REQUESTED" ? (
                                 <div className={styles.row}>
@@ -268,6 +274,11 @@ export function TripsPanel({ trips }: { trips: Trip[] }) {
                             {"  "}• Total: {formatUsdFromCents(openTrip.totalCents)} {openTrip.currency} • Payment:{" "}
                             {openTrip.payment?.status ?? "NONE"}
                         </div>
+                        {openTrip.subtotalCents !== undefined ? (
+                            <div className={styles.modalEarnings}>
+                                Your earnings: <strong>{formatUsdFromCents(Math.round(openTrip.subtotalCents * 0.8))}</strong> {openTrip.currency} (80% of subtotal) + tips
+                            </div>
+                        ) : null}
 
                         <div className={styles.modalRow}>
                             {openTrip.status === "REQUESTED" ? (

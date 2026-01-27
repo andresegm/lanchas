@@ -228,7 +228,7 @@ export const liveRidesRoutes: FastifyPluginAsync = async (app) => {
 
         const hourlyRateCents = fixedRateCents(rumbo);
         const subtotalCents = hourlyRateCents * hours;
-        const commissionRate = 0.18;
+        const commissionRate = 0.07;
         const commissionCents = Math.round(subtotalCents * commissionRate);
         const totalCents = subtotalCents + commissionCents;
 

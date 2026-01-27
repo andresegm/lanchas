@@ -209,6 +209,7 @@ export const notificationsRoutes: FastifyPluginAsync = async (app) => {
                             endAt: true,
                             passengerCount: true,
                             pricingSnapshot: true,
+                            subtotalCents: true,
                             boat: { select: { id: true, name: true } },
                             createdBy: { select: { id: true, firstName: true } }
                         }
@@ -220,6 +221,7 @@ export const notificationsRoutes: FastifyPluginAsync = async (app) => {
                             rumbo: true,
                             passengerCount: true,
                             hours: true,
+                            subtotalCents: true,
                             totalCents: true,
                             currency: true,
                             createdAt: true,
@@ -244,6 +246,7 @@ export const notificationsRoutes: FastifyPluginAsync = async (app) => {
                         endAt: n.trip.endAt,
                         passengerCount: n.trip.passengerCount,
                         rumbo: (n.trip.pricingSnapshot as any)?.rumbo ?? null,
+                        subtotalCents: n.trip.subtotalCents,
                         boat: n.trip.boat,
                         createdBy: { firstName: n.trip.createdBy.firstName }
                     }
@@ -257,6 +260,7 @@ export const notificationsRoutes: FastifyPluginAsync = async (app) => {
                         passengerCount: n.liveRideRequest.passengerCount,
                         hours: n.liveRideRequest.hours,
                         currency: n.liveRideRequest.currency,
+                        subtotalCents: n.liveRideRequest.subtotalCents,
                         totalCents: n.liveRideRequest.totalCents,
                         createdBy: { firstName: n.liveRideRequest.createdBy.firstName }
                     }

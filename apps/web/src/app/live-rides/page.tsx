@@ -1,4 +1,5 @@
 import styles from "./page.module.css";
+import { LiveRideRequestForm } from "./_components/LiveRideRequestForm";
 
 export default async function LiveRidesPage({ searchParams }: { searchParams?: Promise<{ sent?: string; error?: string }> }) {
     const sp = (await searchParams) ?? {};
@@ -10,51 +11,43 @@ export default async function LiveRidesPage({ searchParams }: { searchParams?: P
             <h1 className={styles.h1}>Request a live ride</h1>
             <p className={styles.p}>On-the-spot rides from Plaza Mayor. A captain will accept or reject.</p>
 
-            <div className={styles.card}>
-                {sent ? <div className={styles.ok}>Request sent. Keep an eye on notifications.</div> : null}
-                {error ? (
-                    <div className={styles.ok} style={{ borderColor: "rgba(239,68,68,0.25)", background: "rgba(254,226,226,0.75)" }}>
-                        {error}
+            <div className={styles.grid}>
+                <div className={styles.card}>
+                    {sent ? <div className={styles.ok}>Request sent. Keep an eye on notifications.</div> : null}
+                    {error ? (
+                        <div className={styles.ok} style={{ borderColor: "rgba(239,68,68,0.25)", background: "rgba(254,226,226,0.75)" }}>
+                            {error}
+                        </div>
+                    ) : null}
+
+                    <LiveRideRequestForm />
+                </div>
+
+                <div className={styles.card}>
+                    <h2 className={styles.h2}>Rumbos overview</h2>
+                    <p className={styles.dim}>
+                        In Lechería, trips typically follow one (or more) of these routes. Your selected rumbo determines the hourly rate.
+                    </p>
+
+                    <div className={styles.rumboBlock}>
+                        <div className={styles.rumboTitle}>Rumbo 1</div>
+                        <div className={styles.rumboText}>
+                            Las Borrachas (snorkel stop), Puinare (busiest), El Faro (beach + party at night), El Saco, Bahía del Silencio (quiet bay).
+                        </div>
                     </div>
-                ) : null}
-
-                <form method="POST" action="/api/live-rides" className={styles.form}>
-                    <label className={styles.label}>
-                        <span>Pickup point</span>
-                        <input className={styles.input} value="Plaza Mayor (fixed for MVP)" readOnly />
-                    </label>
-
-                    <label className={styles.label}>
-                        <span>Rumbo (route)</span>
-                        <select className={styles.input} name="rumbo" required defaultValue="">
-                            <option value="" disabled>
-                                Select a rumbo
-                            </option>
-                            <option value="RUMBO_1">Rumbo 1 — $60/hr</option>
-                            <option value="RUMBO_2">Rumbo 2 — $80/hr</option>
-                            <option value="RUMBO_3">Rumbo 3 — $100/hr</option>
-                        </select>
-                    </label>
-
-                    <div className={styles.row}>
-                        <label className={styles.label}>
-                            <span>People</span>
-                            <input className={styles.input} name="passengerCount" type="number" min={1} defaultValue={1} required />
-                        </label>
-                        <label className={styles.label}>
-                            <span>Hours (min 4)</span>
-                            <input className={styles.input} name="hours" type="number" min={4} defaultValue={4} required />
-                        </label>
+                    <div className={styles.rumboBlock}>
+                        <div className={styles.rumboTitle}>Rumbo 2</div>
+                        <div className={styles.rumboText}>Isla de Plata (turquoise + white sand), Varadero (long beach), Punta la Cruz (quick access).</div>
+                    </div>
+                    <div className={styles.rumboBlock}>
+                        <div className={styles.rumboTitle}>Rumbo 3</div>
+                        <div className={styles.rumboText}>Las Caracas (postcard beach), Playa Piscina (calm "pool" water), El Tigrillo (quieter spot).</div>
                     </div>
 
-                    <div className={styles.meta}>
-                        Pricing is fixed for MVP and does not depend on the boat. This will be improved later.
-                    </div>
-
-                    <button className={styles.primary} type="submit">
-                        Request now
-                    </button>
-                </form>
+                    <a className={styles.secondaryLink} href="/destinations">
+                        See full destination guide →
+                    </a>
+                </div>
             </div>
         </div>
     );

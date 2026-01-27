@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { formatUsdFromCents } from "@/lib/money";
 import styles from "./browserNotifications.module.css";
 
 type MeResponse = { user: { email: string; role: string } };
@@ -8,8 +9,8 @@ type CaptainMeResponse = { captain: null | { boats: Array<{ liveRidesOn: boolean
 type Notif = {
     id: string;
     type: string;
-    trip: null | { boat: { name: string }; passengerCount: number; rumbo: string | null; createdBy: { firstName: string | null } };
-    liveRide?: null | { id: string; pickupPoint: string; rumbo: string; passengerCount: number; hours: number; createdBy: { firstName: string | null } };
+    trip: null | { boat: { name: string }; passengerCount: number; rumbo: string | null; subtotalCents?: number; createdBy: { firstName: string | null } };
+    liveRide?: null | { id: string; pickupPoint: string; rumbo: string; passengerCount: number; hours: number; subtotalCents?: number; currency: string; createdBy: { firstName: string | null } };
 };
 type NotificationsMeResponse = { unreadCount: number; notifications: Notif[] };
 
@@ -252,6 +253,11 @@ export function BrowserNotifications() {
                     <div className={styles.modal}>
                         <div className={styles.modalTitle}>Live ride request</div>
                         <div className={styles.modalMeta}>{makeBody(offerModal.offer)}</div>
+                        {offerModal.offer.liveRide?.subtotalCents !== undefined ? (
+                            <div className={styles.modalEarnings}>
+                                Your earnings: <strong>{formatUsdFromCents(Math.round(offerModal.offer.liveRide.subtotalCents * 0.8))}</strong> {offerModal.offer.liveRide.currency} (80% of subtotal) + tips
+                            </div>
+                        ) : null}
                         <div className={styles.modalActions}>
                             <button className={styles.primary} type="button" onClick={acceptLiveRide}>
                                 Accept
