@@ -43,48 +43,89 @@ export default async function ProfilePage() {
 
             <div className={styles.section}>
                 <h2 className={styles.h2}>Personal Information</h2>
-                <form method="POST" action="/api/auth/me" className={styles.form}>
-                    <label className={styles.label}>
-                        <span>First Name</span>
-                        <input
-                            className={styles.input}
-                            name="firstName"
-                            type="text"
-                            defaultValue={data.user.firstName ?? ""}
-                            autoComplete="given-name"
-                        />
-                    </label>
+                <div className={styles.kv}>
+                    <div>
+                        <div className={styles.k}>First Name</div>
+                        <div className={styles.v}>{data.user.firstName ?? "—"}</div>
+                    </div>
+                    <div>
+                        <div className={styles.k}>Last Name</div>
+                        <div className={styles.v}>{data.user.lastName ?? "—"}</div>
+                    </div>
+                    <div>
+                        <div className={styles.k}>Date of Birth</div>
+                        <div className={styles.v}>
+                            {data.user.dateOfBirth
+                                ? (() => {
+                                    // Extract date part (YYYY-MM-DD) to avoid timezone issues
+                                    const dateStr = data.user.dateOfBirth.split("T")[0];
+                                    if (!dateStr) return "—";
+                                    const parts = dateStr.split("-");
+                                    if (parts.length !== 3) return "—";
+                                    const year = parts[0]!;
+                                    const month = parts[1]!;
+                                    const day = parts[2]!;
+                                    const date = new Date(parseInt(year, 10), parseInt(month, 10) - 1, parseInt(day, 10));
+                                    return date.toLocaleDateString("en-US", {
+                                        year: "numeric",
+                                        month: "long",
+                                        day: "numeric"
+                                    });
+                                })()
+                                : "—"}
+                        </div>
+                    </div>
+                </div>
+                <details className={styles.details}>
+                    <summary className={styles.summary}>
+                        <span>Edit personal information</span>
+                        <span className={styles.summaryHint}>Update name and date of birth</span>
+                    </summary>
+                    <div className={styles.detailsBody}>
+                        <form method="POST" action="/api/auth/me" className={styles.form}>
+                            <label className={styles.label}>
+                                <span>First Name</span>
+                                <input
+                                    className={styles.input}
+                                    name="firstName"
+                                    type="text"
+                                    defaultValue={data.user.firstName ?? ""}
+                                    autoComplete="given-name"
+                                />
+                            </label>
 
-                    <label className={styles.label}>
-                        <span>Last Name</span>
-                        <input
-                            className={styles.input}
-                            name="lastName"
-                            type="text"
-                            defaultValue={data.user.lastName ?? ""}
-                            autoComplete="family-name"
-                        />
-                    </label>
+                            <label className={styles.label}>
+                                <span>Last Name</span>
+                                <input
+                                    className={styles.input}
+                                    name="lastName"
+                                    type="text"
+                                    defaultValue={data.user.lastName ?? ""}
+                                    autoComplete="family-name"
+                                />
+                            </label>
 
-                    <label className={styles.label}>
-                        <span>Date of Birth</span>
-                        <input
-                            className={styles.input}
-                            name="dateOfBirth"
-                            type="date"
-                            defaultValue={
-                                data.user.dateOfBirth
-                                    ? new Date(data.user.dateOfBirth).toISOString().split("T")[0]
-                                    : ""
-                            }
-                            autoComplete="bday"
-                        />
-                    </label>
+                            <label className={styles.label}>
+                                <span>Date of Birth</span>
+                                <input
+                                    className={styles.input}
+                                    name="dateOfBirth"
+                                    type="date"
+                                    defaultValue={
+                                        data.user.dateOfBirth
+                                            ? data.user.dateOfBirth.split("T")[0]
+                                            : ""
+                                    }
+                                    autoComplete="bday"
+                                />
+                            </label>
 
-                    <button className={styles.primary} type="submit">
-                        Save changes
-                    </button>
-                </form>
+                            <button className={styles.secondary} type="submit">
+                                Save changes
+                            </button>
+                        </form>
+                    </div>
+                </details>
             </div>
 
             <div className={styles.section}>
