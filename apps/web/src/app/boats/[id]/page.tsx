@@ -12,7 +12,21 @@ type BoatResponse = {
         maxPassengers: number;
         minimumHours: number;
         rating: { avg: number | null; count: number };
-        captain: { displayName: string; rating: { avg: number | null; count: number } };
+        captain: {
+            id: string;
+            displayName: string;
+            bio: string | null;
+            phone: string | null;
+            rating: { avg: number | null; count: number };
+            reviews?: Array<{
+                id: string;
+                rating: number;
+                comment: string | null;
+                authorEmail: string;
+                boatName: string;
+                createdAt: string;
+            }>;
+        };
         photos?: Array<{ id: string; url: string }>;
         rumboPricings: Array<{
             id: string;
@@ -63,6 +77,39 @@ export default async function BoatPage({ params }: { params: Promise<{ id: strin
             <h1 className={styles.h1}>{b.name}</h1>
             <div className={styles.meta}>
                 {b.captain.displayName} • {formatRating(b.captain.rating.avg, b.captain.rating.count)} • {b.maxPassengers} pax • min {b.minimumHours}h
+            </div>
+
+            <div className={styles.captainCard}>
+                <h2 className={styles.h2}>About {b.captain.displayName}</h2>
+                {b.captain.bio ? <p className={styles.bio}>{b.captain.bio}</p> : null}
+                {b.captain.phone ? (
+                    <div className={styles.meta}>
+                        <strong>Phone:</strong> {b.captain.phone}
+                    </div>
+                ) : null}
+                <div className={styles.meta}>
+                    <strong>Rating:</strong> {formatRating(b.captain.rating.avg, b.captain.rating.count)}
+                </div>
+
+                {b.captain.reviews && b.captain.reviews.length > 0 ? (
+                    <div className={styles.reviewsSection}>
+                        <h3 className={styles.h3}>Recent reviews</h3>
+                        <ul className={styles.reviewsList}>
+                            {b.captain.reviews.map((r) => (
+                                <li key={r.id} className={styles.reviewItem}>
+                                    <div className={styles.reviewHeader}>
+                                        <span className={styles.reviewRating}>{r.rating}/5 ★</span>
+                                        <span className={styles.reviewAuthor}>{r.authorEmail}</span>
+                                        <span className={styles.reviewBoat}>{r.boatName}</span>
+                                    </div>
+                                    {r.comment ? <div className={styles.reviewComment}>{r.comment}</div> : null}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                ) : (
+                    <div className={styles.dim}>No reviews yet.</div>
+                )}
             </div>
 
             {b.photos?.length ? (

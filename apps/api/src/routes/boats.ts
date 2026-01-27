@@ -196,7 +196,7 @@ export const boatsRoutes: FastifyPluginAsync = async (app) => {
         const boat = await prisma.boat.findUnique({
             where: { id: req.params.id },
             include: {
-                captain: { select: { id: true, displayName: true } },
+                captain: { select: { id: true, displayName: true, bio: true, phone: true } },
                 pricings: { where: { activeTo: null }, orderBy: { activeFrom: "desc" } },
                 rumboPricings: { orderBy: { rumbo: "asc" } },
                 photos: { orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }], take: 20 }
@@ -207,7 +207,7 @@ export const boatsRoutes: FastifyPluginAsync = async (app) => {
         type OneBoatRow = { avg: number | null; count: number };
         type OneCaptainRow = { avg: number | null; count: number };
 
-        const [boatRating, captainRating] = await Promise.all([
+        const [boatRating, captainRating, captainReviews] = await Promise.all([
             prisma.$queryRaw<OneBoatRow[]>`
                 SELECT AVG(r."rating")::float as "avg",
                        COUNT(*)::int as "count"
@@ -224,8 +224,30 @@ export const boatsRoutes: FastifyPluginAsync = async (app) => {
                 JOIN "Boat" b ON b."id" = t."boatId"
                 WHERE r."targetType" = 'CAPTAIN'
                   AND b."captainId" = ${boat.captain.id}
-            `
+            `,
+            prisma.review.findMany({
+                where: {
+                    trip: { boat: { captainId: boat.captain.id } },
+                    targetType: "CAPTAIN"
+                },
+                include: {
+                    author: { select: { email: true } },
+                    trip: { select: { boat: { select: { name: true } } } }
+                },
+                orderBy: { createdAt: "desc" },
+                take: 10
+            })
         ]);
+
+        const captainRatingData = captainRating[0] ?? { avg: null, count: 0 };
+        const reviewsData = captainReviews.map((r) => ({
+            id: r.id,
+            rating: r.rating,
+            comment: r.comment,
+            authorEmail: r.author.email,
+            boatName: r.trip.boat.name,
+            createdAt: r.createdAt
+        }));
 
         return {
             boat: {
@@ -233,7 +255,8 @@ export const boatsRoutes: FastifyPluginAsync = async (app) => {
                 rating: boatRating[0] ?? { avg: null, count: 0 },
                 captain: {
                     ...boat.captain,
-                    rating: captainRating[0] ?? { avg: null, count: 0 }
+                    rating: captainRatingData,
+                    reviews: reviewsData
                 }
             }
         };

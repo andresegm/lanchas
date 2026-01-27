@@ -34,16 +34,34 @@ export const tripsRoutes: FastifyPluginAsync = async (app) => {
                 participants: { include: { user: { select: { id: true, email: true } } } },
                 payment: true,
                 incidents: { orderBy: { createdAt: "desc" } },
-                reviews: { orderBy: { createdAt: "desc" } }
+                reviews: {
+                    include: { author: { select: { id: true, email: true } } },
+                    orderBy: { createdAt: "desc" }
+                }
             }
         });
         if (!trip) throw app.httpErrors.notFound("Trip not found");
 
         const isParticipant = trip.participants.some((p) => p.userId === payload.sub);
-        // Trip detail page is guest-facing; captains should not access it.
-        if (!isParticipant) throw app.httpErrors.forbidden("Guests only");
+        const isCaptainUser = trip.boat.captain.userId === payload.sub;
 
-        return { trip };
+        // Allow both participants and captain to view trip details
+        if (!isParticipant && !isCaptainUser) throw app.httpErrors.forbidden("Not your trip");
+
+        return {
+            trip: {
+                ...trip,
+                reviews: trip.reviews.map((r) => ({
+                    id: r.id,
+                    targetType: r.targetType,
+                    rating: r.rating,
+                    comment: r.comment,
+                    createdAt: r.createdAt,
+                    authorId: r.author.id
+                }))
+            },
+            isCaptain: isCaptainUser
+        };
     });
 
     // Captain-safe trip detail (no incidents/reviews; includes guest contact + pax)

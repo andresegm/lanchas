@@ -184,6 +184,78 @@
     opacity: 1;
 }
 
+.captainCard {
+    margin-top: 14px;
+    padding: 16px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(15, 23, 42, 0.12);
+}
+
+.bio {
+    margin: 10px 0;
+    line-height: 1.5;
+    opacity: 0.9;
+}
+
+.h3 {
+    margin: 14px 0 8px;
+    font-size: 15px;
+    font-weight: 950;
+}
+
+.reviewsSection {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.reviewsList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 12px;
+}
+
+.reviewItem {
+    padding: 12px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.reviewHeader {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+    font-size: 12px;
+}
+
+.reviewRating {
+    font-weight: 950;
+    color: #f59e0b;
+}
+
+.reviewAuthor {
+    opacity: 0.8;
+    font-weight: 800;
+}
+
+.reviewBoat {
+    opacity: 0.7;
+    font-size: 11px;
+}
+
+.reviewComment {
+    margin-top: 6px;
+    font-size: 13px;
+    line-height: 1.5;
+    opacity: 0.9;
+}
+
 @media (max-width: 920px) {
     .grid {
         grid-template-columns: 1fr;

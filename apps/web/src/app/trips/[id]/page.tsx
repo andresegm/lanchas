@@ -18,8 +18,9 @@ type TripDetail = {
         participants: Array<{ userId: string; user: { email: string } }>;
         payment: null | { status: string; amountCents: number };
         incidents: Array<{ id: string; type: string; summary: string; createdAt: string }>;
-        reviews: Array<{ id: string; targetType: string; rating: number; comment: string | null; createdAt: string }>;
+        reviews: Array<{ id: string; targetType: string; rating: number; comment: string | null; createdAt: string; authorId: string }>;
     };
+    isCaptain?: boolean;
 };
 
 async function loadTrip(id: string): Promise<TripDetail> {
@@ -40,10 +41,32 @@ async function loadTrip(id: string): Promise<TripDetail> {
     return (await res.json()) as TripDetail;
 }
 
+async function loadCurrentUser() {
+    const apiBase = getApiBaseUrl() ?? "http://127.0.0.1:3001";
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore
+        .getAll()
+        .map((c: { name: string; value: string }) => `${c.name}=${c.value}`)
+        .join("; ");
+
+    try {
+        const res = await fetch(new URL("/auth/me", apiBase), {
+            headers: { cookie: cookieHeader },
+            cache: "no-store"
+        });
+        if (!res.ok) return null;
+        return (await res.json()) as { user: { id: string; email: string; role: string } };
+    } catch {
+        return null;
+    }
+}
+
 export default async function TripDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
     const data = await loadTrip(id);
     const t = data.trip;
+    const currentUser = await loadCurrentUser();
+    const isCaptain = data.isCaptain || currentUser?.user.role === "CAPTAIN" || currentUser?.user.role === "BOTH";
 
     return (
         <div className={styles.wrap}>
@@ -121,44 +144,97 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
                 <p className={styles.dim}>Reviews can be submitted after the trip is marked COMPLETED.</p>
 
                 <div className={styles.reviewGrid}>
-                    <div>
-                        <h3 className={styles.h3}>Review captain</h3>
-                        <form method="POST" action={`/api/trips/${t.id}/reviews`} className={styles.form}>
-                            <input type="hidden" name="targetType" value="CAPTAIN" />
-                            <label className={styles.label}>
-                                <span>Rating</span>
-                                <div className={styles.stars} aria-label="Rating (1-5 stars)">
-                                    <input id="cap_star_5" name="rating" type="radio" value="5" required />
-                                    <label htmlFor="cap_star_5" title="5 stars">
-                                        ★
-                                    </label>
-                                    <input id="cap_star_4" name="rating" type="radio" value="4" />
-                                    <label htmlFor="cap_star_4" title="4 stars">
-                                        ★
-                                    </label>
-                                    <input id="cap_star_3" name="rating" type="radio" value="3" />
-                                    <label htmlFor="cap_star_3" title="3 stars">
-                                        ★
-                                    </label>
-                                    <input id="cap_star_2" name="rating" type="radio" value="2" />
-                                    <label htmlFor="cap_star_2" title="2 stars">
-                                        ★
-                                    </label>
-                                    <input id="cap_star_1" name="rating" type="radio" value="1" />
-                                    <label htmlFor="cap_star_1" title="1 star">
-                                        ★
-                                    </label>
-                                </div>
-                            </label>
-                            <label className={styles.label}>
-                                <span>Comment (optional)</span>
-                                <textarea className={styles.textarea} name="comment" rows={3} />
-                            </label>
-                            <button className={styles.secondary} type="submit">
-                                Submit review
-                            </button>
-                        </form>
-                    </div>
+                    {!isCaptain ? (
+                        <div>
+                            <h3 className={styles.h3}>Review captain</h3>
+                            <form method="POST" action={`/api/trips/${t.id}/reviews`} className={styles.form}>
+                                <input type="hidden" name="targetType" value="CAPTAIN" />
+                                <label className={styles.label}>
+                                    <span>Rating</span>
+                                    <div className={styles.stars} aria-label="Rating (1-5 stars)">
+                                        <input id="cap_star_5" name="rating" type="radio" value="5" required />
+                                        <label htmlFor="cap_star_5" title="5 stars">
+                                            ★
+                                        </label>
+                                        <input id="cap_star_4" name="rating" type="radio" value="4" />
+                                        <label htmlFor="cap_star_4" title="4 stars">
+                                            ★
+                                        </label>
+                                        <input id="cap_star_3" name="rating" type="radio" value="3" />
+                                        <label htmlFor="cap_star_3" title="3 stars">
+                                            ★
+                                        </label>
+                                        <input id="cap_star_2" name="rating" type="radio" value="2" />
+                                        <label htmlFor="cap_star_2" title="2 stars">
+                                            ★
+                                        </label>
+                                        <input id="cap_star_1" name="rating" type="radio" value="1" />
+                                        <label htmlFor="cap_star_1" title="1 star">
+                                            ★
+                                        </label>
+                                    </div>
+                                </label>
+                                <label className={styles.label}>
+                                    <span>Comment (optional)</span>
+                                    <textarea className={styles.textarea} name="comment" rows={3} />
+                                </label>
+                                <button className={styles.secondary} type="submit">
+                                    Submit review
+                                </button>
+                            </form>
+                        </div>
+                    ) : null}
+                    {isCaptain ? (
+                        <div>
+                            <h3 className={styles.h3}>Review guests</h3>
+                            {(() => {
+                                const hasGuestReview = t.reviews.some((r) => r.targetType === "GUEST" && r.authorId === currentUser?.user.id);
+                                if (hasGuestReview) {
+                                    return <div className={styles.dim}>You have already reviewed the guests on this trip.</div>;
+                                }
+                                return (
+                                    <form method="POST" action={`/api/trips/${t.id}/reviews`} className={styles.form}>
+                                        <input type="hidden" name="targetType" value="GUEST" />
+                                        <div className={styles.meta}>
+                                            Reviewing guests: {t.participants.map((p) => p.user.email).join(", ")}
+                                        </div>
+                                        <label className={styles.label}>
+                                            <span>Rating</span>
+                                            <div className={styles.stars} aria-label="Rating (1-5 stars)">
+                                                <input id="guest_star_5" name="rating" type="radio" value="5" required />
+                                                <label htmlFor="guest_star_5" title="5 stars">
+                                                    ★
+                                                </label>
+                                                <input id="guest_star_4" name="rating" type="radio" value="4" />
+                                                <label htmlFor="guest_star_4" title="4 stars">
+                                                    ★
+                                                </label>
+                                                <input id="guest_star_3" name="rating" type="radio" value="3" />
+                                                <label htmlFor="guest_star_3" title="3 stars">
+                                                    ★
+                                                </label>
+                                                <input id="guest_star_2" name="rating" type="radio" value="2" />
+                                                <label htmlFor="guest_star_2" title="2 stars">
+                                                    ★
+                                                </label>
+                                                <input id="guest_star_1" name="rating" type="radio" value="1" />
+                                                <label htmlFor="guest_star_1" title="1 star">
+                                                    ★
+                                                </label>
+                                            </div>
+                                        </label>
+                                        <label className={styles.label}>
+                                            <span>Comment (optional)</span>
+                                            <textarea className={styles.textarea} name="comment" rows={3} />
+                                        </label>
+                                        <button className={styles.secondary} type="submit">
+                                            Submit review
+                                        </button>
+                                    </form>
+                                );
+                            })()}
+                        </div>
+                    ) : null}
                 </div>
 
                 {t.reviews.length ? (
