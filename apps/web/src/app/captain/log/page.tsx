@@ -116,6 +116,10 @@ export default async function CaptainLogPage() {
                     <div className={styles.title}>Trip requests</div>
                     <div className={styles.meta}>Accept/reject requests, mark trips completed.</div>
                 </a>
+                <a className={styles.card} href="/captain/earnings">
+                    <div className={styles.title}>Earnings</div>
+                    <div className={styles.meta}>Track your earnings with detailed breakdowns and filters.</div>
+                </a>
             </div>
 
             {cap?.captain && boats.length > 0 ? (

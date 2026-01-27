@@ -375,5 +375,154 @@ export const captainRoutes: FastifyPluginAsync = async (app) => {
             return { rumboPricings };
         }
     );
+
+    // Earnings endpoint
+    app.get<{
+        Querystring: {
+            startDate?: string;
+            endDate?: string;
+            boatId?: string;
+            status?: string;
+            limit?: unknown;
+            offset?: unknown;
+        };
+    }>("/captain/earnings", async (req) => {
+        const { captain } = await requireCaptain(app, req);
+        const limit = Math.max(1, Math.min(100, Number(req.query.limit ?? 50) || 50));
+        const offset = Math.max(0, Number(req.query.offset ?? 0) || 0);
+
+        const where: any = {
+            boat: { captainId: captain.id }
+        };
+
+        // Date filters
+        if (req.query.startDate) {
+            const startDate = new Date(req.query.startDate);
+            if (!Number.isNaN(startDate.getTime())) {
+                where.startAt = { ...where.startAt, gte: startDate };
+            }
+        }
+        if (req.query.endDate) {
+            const endDate = new Date(req.query.endDate);
+            if (!Number.isNaN(endDate.getTime())) {
+                // Include trips that end on or before this date
+                where.endAt = { ...where.endAt, lte: endDate };
+            }
+        }
+
+        // Boat filter
+        if (req.query.boatId) {
+            const boat = await prisma.boat.findFirst({
+                where: { id: req.query.boatId, captainId: captain.id },
+                select: { id: true }
+            });
+            if (boat) {
+                where.boatId = boat.id;
+            }
+        }
+
+        // Status filter
+        if (req.query.status) {
+            where.status = req.query.status;
+        }
+
+        const [trips, totalCount] = await Promise.all([
+            prisma.trip.findMany({
+                where,
+                include: {
+                    boat: { select: { id: true, name: true } },
+                    payment: { select: { id: true, status: true, amountCents: true } },
+                    createdBy: { select: { id: true, firstName: true } }
+                },
+                orderBy: { startAt: "desc" },
+                take: limit,
+                skip: offset
+            }),
+            prisma.trip.count({ where })
+        ]);
+
+        // Calculate earnings (80% of subtotal)
+        const captainEarningsRate = 0.8;
+        const tripsWithEarnings = trips.map((trip) => ({
+            id: trip.id,
+            boatId: trip.boatId,
+            boatName: trip.boat.name,
+            status: trip.status,
+            startAt: trip.startAt,
+            endAt: trip.endAt,
+            passengerCount: trip.passengerCount,
+            rumbo: (trip.pricingSnapshot as any)?.rumbo ?? null,
+            subtotalCents: trip.subtotalCents,
+            totalCents: trip.totalCents,
+            currency: trip.currency,
+            captainEarningsCents: Math.round(trip.subtotalCents * captainEarningsRate),
+            payment: trip.payment,
+            createdBy: trip.createdBy,
+            createdAt: trip.createdAt
+        }));
+
+        // Calculate aggregates
+        const totalEarningsCents = tripsWithEarnings.reduce((sum, t) => sum + t.captainEarningsCents, 0);
+        const totalSubtotalCents = tripsWithEarnings.reduce((sum, t) => sum + t.subtotalCents, 0);
+        const totalTotalCents = tripsWithEarnings.reduce((sum, t) => sum + t.totalCents, 0);
+
+        // Breakdown by status
+        const byStatus = tripsWithEarnings.reduce(
+            (acc, t) => {
+                const key = t.status;
+                if (!acc[key]) {
+                    acc[key] = { count: 0, earningsCents: 0, subtotalCents: 0 };
+                }
+                acc[key].count++;
+                acc[key].earningsCents += t.captainEarningsCents;
+                acc[key].subtotalCents += t.subtotalCents;
+                return acc;
+            },
+            {} as Record<string, { count: number; earningsCents: number; subtotalCents: number }>
+        );
+
+        // Breakdown by boat
+        const byBoat = tripsWithEarnings.reduce(
+            (acc, t) => {
+                const key = t.boatId;
+                if (!acc[key]) {
+                    acc[key] = { boatId: t.boatId, boatName: t.boatName, count: 0, earningsCents: 0, subtotalCents: 0 };
+                }
+                acc[key].count++;
+                acc[key].earningsCents += t.captainEarningsCents;
+                acc[key].subtotalCents += t.subtotalCents;
+                return acc;
+            },
+            {} as Record<string, { boatId: string; boatName: string; count: number; earningsCents: number; subtotalCents: number }>
+        );
+
+        // Get all boats for filter dropdown
+        const boats = await prisma.boat.findMany({
+            where: { captainId: captain.id },
+            select: { id: true, name: true },
+            orderBy: { name: "asc" }
+        });
+
+        return {
+            trips: tripsWithEarnings,
+            summary: {
+                totalEarningsCents,
+                totalSubtotalCents,
+                totalTotalCents,
+                tripCount: tripsWithEarnings.length
+            },
+            breakdown: {
+                byStatus,
+                byBoat: Object.values(byBoat)
+            },
+            boats,
+            pagination: {
+                total: totalCount,
+                limit,
+                offset,
+                hasMore: offset + trips.length < totalCount
+            }
+        };
+    });
 };
 
