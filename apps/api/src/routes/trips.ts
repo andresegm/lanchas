@@ -31,7 +31,7 @@ export const tripsRoutes: FastifyPluginAsync = async (app) => {
             where: { id: req.params.id },
             include: {
                 boat: { include: { captain: { select: { id: true, userId: true, displayName: true } } } },
-                participants: { include: { user: { select: { id: true, email: true } } } },
+                participants: { include: { user: { select: { id: true, email: true, firstName: true } } } },
                 payment: true,
                 incidents: { orderBy: { createdAt: "desc" } },
                 reviews: {
@@ -439,7 +439,11 @@ export const tripsRoutes: FastifyPluginAsync = async (app) => {
                     totalCents: true,
                     boat: { select: { id: true, name: true } },
                     createdBy: { select: { id: true, firstName: true } },
-                    payment: true
+                    payment: true,
+                    reviews: {
+                        where: { targetType: ReviewTargetType.GUEST, authorId: captain.userId },
+                        select: { id: true }
+                    }
                 },
                 orderBy: { createdAt: "desc" },
                 take: limit,
@@ -470,10 +474,14 @@ export const tripsRoutes: FastifyPluginAsync = async (app) => {
         const ratingMap = new Map(userRatings.map((r) => [r.userId, { rating: r.rating, reviewCount: r.reviewCount }]));
 
         return {
-            trips: trips.map((t) => ({
-                ...t,
-                rumbo: (t.pricingSnapshot as any)?.rumbo ?? null
-            })),
+            trips: trips.map((t) => {
+                const { reviews, ...tripWithoutReviews } = t;
+                return {
+                    ...tripWithoutReviews,
+                    rumbo: (t.pricingSnapshot as any)?.rumbo ?? null,
+                    hasGuestReview: reviews.length > 0
+                };
+            }),
             pagination: {
                 total: totalCount,
                 limit,

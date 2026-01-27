@@ -16,6 +16,7 @@ type CaptainTripsResponse = {
         boat: { name: string };
         createdBy: { firstName: string | null; rating: number | null; reviewCount: number };
         payment: null | { status: string };
+        hasGuestReview?: boolean;
     }>;
 };
 

@@ -18,6 +18,7 @@ type Trip = {
     boat: { name: string };
     createdBy: { firstName: string | null; rating: number | null; reviewCount: number };
     payment: null | { status: string };
+    hasGuestReview?: boolean;
 };
 
 function rumboLabel(r: Trip["rumbo"]) {
@@ -176,6 +177,42 @@ export function TripsPanel({ trips }: { trips: Trip[] }) {
                                     </button>
                                 </form>
                             ) : null}
+
+                            {t.status === "COMPLETED" && !t.hasGuestReview ? (
+                                <details className={styles.reviewDetails}>
+                                    <summary className={styles.reviewSummary}>Review guests</summary>
+                                    <form method="POST" action={`/api/trips/${t.id}/reviews`} className={styles.reviewForm}>
+                                        <input type="hidden" name="targetType" value="GUEST" />
+                                        <div className={styles.meta}>
+                                            Reviewing: {t.createdBy.firstName ?? "Guest"}
+                                        </div>
+                                        <label className={styles.label}>
+                                            <span>Rating</span>
+                                            <div className={styles.stars} aria-label="Rating (1-5 stars)">
+                                                <input id={`${t.id}_star_5`} name="rating" type="radio" value="5" required />
+                                                <label htmlFor={`${t.id}_star_5`} title="5 stars">★</label>
+                                                <input id={`${t.id}_star_4`} name="rating" type="radio" value="4" />
+                                                <label htmlFor={`${t.id}_star_4`} title="4 stars">★</label>
+                                                <input id={`${t.id}_star_3`} name="rating" type="radio" value="3" />
+                                                <label htmlFor={`${t.id}_star_3`} title="3 stars">★</label>
+                                                <input id={`${t.id}_star_2`} name="rating" type="radio" value="2" />
+                                                <label htmlFor={`${t.id}_star_2`} title="2 stars">★</label>
+                                                <input id={`${t.id}_star_1`} name="rating" type="radio" value="1" />
+                                                <label htmlFor={`${t.id}_star_1`} title="1 star">★</label>
+                                            </div>
+                                        </label>
+                                        <label className={styles.label}>
+                                            <span>Comment (optional)</span>
+                                            <textarea className={styles.textarea} name="comment" rows={3} />
+                                        </label>
+                                        <button className={styles.secondary} type="submit">
+                                            Submit review
+                                        </button>
+                                    </form>
+                                </details>
+                            ) : t.status === "COMPLETED" && t.hasGuestReview ? (
+                                <div className={styles.dim}>Review submitted</div>
+                            ) : null}
                         </div>
                     ))}
                 </div>
@@ -254,6 +291,43 @@ export function TripsPanel({ trips }: { trips: Trip[] }) {
                                     </button>
                                 </form>
                             ) : null}
+
+                            {openTrip.status === "COMPLETED" && !openTrip.hasGuestReview ? (
+                                <details className={styles.reviewDetails}>
+                                    <summary className={styles.reviewSummary}>Review guests</summary>
+                                    <form method="POST" action={`/api/trips/${openTrip.id}/reviews`} className={styles.reviewForm}>
+                                        <input type="hidden" name="targetType" value="GUEST" />
+                                        <div className={styles.modalMeta}>
+                                            Reviewing: {openTrip.createdBy.firstName ?? "Guest"}
+                                        </div>
+                                        <label className={styles.label}>
+                                            <span>Rating</span>
+                                            <div className={styles.stars} aria-label="Rating (1-5 stars)">
+                                                <input id={`modal_${openTrip.id}_star_5`} name="rating" type="radio" value="5" required />
+                                                <label htmlFor={`modal_${openTrip.id}_star_5`} title="5 stars">★</label>
+                                                <input id={`modal_${openTrip.id}_star_4`} name="rating" type="radio" value="4" />
+                                                <label htmlFor={`modal_${openTrip.id}_star_4`} title="4 stars">★</label>
+                                                <input id={`modal_${openTrip.id}_star_3`} name="rating" type="radio" value="3" />
+                                                <label htmlFor={`modal_${openTrip.id}_star_3`} title="3 stars">★</label>
+                                                <input id={`modal_${openTrip.id}_star_2`} name="rating" type="radio" value="2" />
+                                                <label htmlFor={`modal_${openTrip.id}_star_2`} title="2 stars">★</label>
+                                                <input id={`modal_${openTrip.id}_star_1`} name="rating" type="radio" value="1" />
+                                                <label htmlFor={`modal_${openTrip.id}_star_1`} title="1 star">★</label>
+                                            </div>
+                                        </label>
+                                        <label className={styles.label}>
+                                            <span>Comment (optional)</span>
+                                            <textarea className={styles.textarea} name="comment" rows={3} />
+                                        </label>
+                                        <button className={styles.secondary} type="submit">
+                                            Submit review
+                                        </button>
+                                    </form>
+                                </details>
+                            ) : openTrip.status === "COMPLETED" && openTrip.hasGuestReview ? (
+                                <div className={styles.modalMeta}>Review submitted</div>
+                            ) : null}
+
                             <button className={styles.secondary} type="button" onClick={() => setOpenTripId(null)}>
                                 Close
                             </button>

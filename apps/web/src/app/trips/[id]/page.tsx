@@ -15,7 +15,7 @@ type TripDetail = {
         currency: string;
         totalCents: number;
         boat: { name: string; captain: { displayName: string; userId: string } };
-        participants: Array<{ userId: string; user: { email: string } }>;
+        participants: Array<{ userId: string; user: { email: string; firstName: string | null } }>;
         payment: null | { status: string; amountCents: number };
         incidents: Array<{ id: string; type: string; summary: string; createdAt: string }>;
         reviews: Array<{ id: string; targetType: string; rating: number; comment: string | null; createdAt: string; authorId: string }>;
@@ -188,15 +188,25 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
                         <div>
                             <h3 className={styles.h3}>Review guests</h3>
                             {(() => {
+                                if (t.status !== "COMPLETED") {
+                                    return (
+                                        <div className={styles.dim}>
+                                            Reviews can only be submitted after the trip is marked as COMPLETED.
+                                        </div>
+                                    );
+                                }
                                 const hasGuestReview = t.reviews.some((r) => r.targetType === "GUEST" && r.authorId === currentUser?.user.id);
                                 if (hasGuestReview) {
                                     return <div className={styles.dim}>You have already reviewed the guests on this trip.</div>;
                                 }
+                                const guestNames = t.participants
+                                    .map((p) => p.user.firstName || p.user.email)
+                                    .join(", ");
                                 return (
                                     <form method="POST" action={`/api/trips/${t.id}/reviews`} className={styles.form}>
                                         <input type="hidden" name="targetType" value="GUEST" />
                                         <div className={styles.meta}>
-                                            Reviewing guests: {t.participants.map((p) => p.user.email).join(", ")}
+                                            Reviewing guests: {guestNames}
                                         </div>
                                         <label className={styles.label}>
                                             <span>Rating</span>
