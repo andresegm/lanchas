@@ -113,32 +113,67 @@ export function BrowserNotifications() {
 
     // Poll notifications and show system notifications when enabled
     useEffect(() => {
-        if (!supports) return;
-        if (!isCaptainRole(role ?? undefined)) return;
+        if (!supports) {
+            console.log("[BrowserNotifications] Notifications not supported");
+            return;
+        }
+        if (!isCaptainRole(role ?? undefined)) {
+            console.log("[BrowserNotifications] Not a captain role:", role);
+            return;
+        }
+
+        console.log("[BrowserNotifications] Starting notification polling, role:", role, "liveOn:", liveOn);
 
         // Initial check immediately, then poll
         const checkNotifications = async () => {
             try {
                 const res = await fetch("/api/notifications/me?unreadOnly=1&limit=1", { cache: "no-store" });
-                if (!res.ok) return;
+                if (!res.ok) {
+                    console.log("[BrowserNotifications] Failed to fetch notifications:", res.status);
+                    return;
+                }
                 const data = (await res.json()) as NotificationsMeResponse;
                 const top = data.notifications?.[0] ?? null;
-                if (!top) return;
+                if (!top) {
+                    console.log("[BrowserNotifications] No unread notifications");
+                    return;
+                }
+
+                console.log("[BrowserNotifications] Found notification:", top.type, top);
 
                 const isNew = lastSeenRef.current !== top.id;
                 if (isNew) {
+                    console.log("[BrowserNotifications] New notification detected:", top.id, "type:", top.type);
                     lastSeenRef.current = top.id;
+
+                    // Show browser notification if permission granted
                     if (Notification.permission === "granted") {
-                        new Notification(makeTitle(top), { body: makeBody(top) });
+                        try {
+                            console.log("[BrowserNotifications] Showing browser notification");
+                            new Notification(makeTitle(top), { body: makeBody(top) });
+                        } catch (err) {
+                            console.error("[BrowserNotifications] Failed to show browser notification:", err);
+                        }
+                    } else {
+                        console.log("[BrowserNotifications] Browser notification permission not granted:", Notification.permission);
                     }
-                    // If a live ride offer notification exists, show the modal
+
+                    // Always show modal for live ride offers, regardless of liveOn state
                     // The notification itself is proof the captain was offered the ride
-                    if (top.type === "LIVE_RIDE_OFFER" && top.liveRide) {
-                        setOfferModal({ notificationId: top.id, offer: top });
+                    if (top.type === "LIVE_RIDE_OFFER") {
+                        console.log("[BrowserNotifications] Live ride offer detected, liveRide:", top.liveRide);
+                        if (top.liveRide) {
+                            console.log("[BrowserNotifications] Setting live ride offer modal");
+                            setOfferModal({ notificationId: top.id, offer: top });
+                        } else {
+                            console.warn("[BrowserNotifications] Live ride offer but no liveRide data");
+                        }
                     }
+                } else {
+                    console.log("[BrowserNotifications] Notification already seen:", top.id);
                 }
-            } catch {
-                // ignore
+            } catch (err) {
+                console.error("[BrowserNotifications] Error checking notifications:", err);
             }
         };
 
@@ -149,7 +184,14 @@ export function BrowserNotifications() {
         const id = window.setInterval(checkNotifications, 5000);
 
         return () => window.clearInterval(id);
-    }, [supports, role, liveOn]);
+    }, [supports, role]); // Removed liveOn dependency - modal should show regardless
+
+    // Debug: log modal state (must be before any early returns)
+    useEffect(() => {
+        if (offerModal) {
+            console.log("[BrowserNotifications] Modal state changed:", offerModal);
+        }
+    }, [offerModal]);
 
     if (!supports) return null;
     if (!isCaptainRole(role ?? undefined)) return null;
@@ -197,7 +239,16 @@ export function BrowserNotifications() {
         <>
             {offerModal?.offer?.type === "LIVE_RIDE_OFFER" && offerModal.offer.liveRide ? (
                 <div className={styles.modalBackdrop} role="dialog" aria-label="Live ride offer">
-                    <button className={styles.modalBackdropBtn} type="button" aria-hidden="true" tabIndex={-1} />
+                    <button
+                        className={styles.modalBackdropBtn}
+                        type="button"
+                        aria-hidden="true"
+                        tabIndex={-1}
+                        onClick={() => {
+                            console.log("[BrowserNotifications] Modal backdrop clicked - closing");
+                            setOfferModal(null);
+                        }}
+                    />
                     <div className={styles.modal}>
                         <div className={styles.modalTitle}>Live ride request</div>
                         <div className={styles.modalMeta}>{makeBody(offerModal.offer)}</div>
