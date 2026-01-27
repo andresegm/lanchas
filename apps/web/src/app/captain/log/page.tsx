@@ -29,7 +29,7 @@ type NotificationsMeResponse = {
             passengerCount: number;
             rumbo: string | null;
             boat: { id: string; name: string };
-            createdBy: { id: string; email: string };
+            createdBy: { id: string; firstName: string | null };
         };
         liveRide?: null | {
             id: string;
@@ -39,7 +39,7 @@ type NotificationsMeResponse = {
             hours: number;
             currency: string;
             totalCents: number;
-            createdBy: { id: string; email: string };
+            createdBy: { id: string; firstName: string | null };
         };
     }>;
 };
@@ -186,12 +186,12 @@ export default async function CaptainLogPage() {
                                     {n.liveRide ? (
                                         <div className={styles.itemMeta}>
                                             {n.liveRide.pickupPoint} • {rumboLabel(n.liveRide.rumbo)} • {n.liveRide.passengerCount} pax •{" "}
-                                            {n.liveRide.hours}h • {n.liveRide.createdBy.email}
+                                            {n.liveRide.hours}h • {n.liveRide.createdBy.firstName ?? "Guest"}
                                         </div>
                                     ) : n.trip ? (
                                         <div className={styles.itemMeta}>
                                             {n.trip.boat.name} • {rumboLabel(n.trip.rumbo)} • {n.trip.passengerCount} pax •{" "}
-                                            {formatCaracasRange(n.trip.startAt, n.trip.endAt)} • {n.trip.createdBy.email}
+                                            {formatCaracasRange(n.trip.startAt, n.trip.endAt)} • {n.trip.createdBy.firstName ?? "Guest"}
                                         </div>
                                     ) : (
                                         <div className={styles.itemMeta}>—</div>

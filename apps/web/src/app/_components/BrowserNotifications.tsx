@@ -8,8 +8,8 @@ type CaptainMeResponse = { captain: null | { boats: Array<{ liveRidesOn: boolean
 type Notif = {
     id: string;
     type: string;
-    trip: null | { boat: { name: string }; passengerCount: number; rumbo: string | null; createdBy: { email: string } };
-    liveRide?: null | { id: string; pickupPoint: string; rumbo: string; passengerCount: number; hours: number; createdBy: { email: string } };
+    trip: null | { boat: { name: string }; passengerCount: number; rumbo: string | null; createdBy: { firstName: string | null } };
+    liveRide?: null | { id: string; pickupPoint: string; rumbo: string; passengerCount: number; hours: number; createdBy: { firstName: string | null } };
 };
 type NotificationsMeResponse = { unreadCount: number; notifications: Notif[] };
 
@@ -30,12 +30,12 @@ function makeBody(n: Notif) {
             n.liveRide.rumbo ?? undefined,
             `${n.liveRide.passengerCount} pax`,
             `${n.liveRide.hours}h`,
-            n.liveRide.createdBy.email
+            n.liveRide.createdBy.firstName ?? "Guest"
         ].filter(Boolean);
         return parts.join(" • ");
     }
     if (n.trip) {
-        const parts = [n.trip.boat.name, n.trip.rumbo ?? undefined, `${n.trip.passengerCount} pax`, n.trip.createdBy.email].filter(Boolean);
+        const parts = [n.trip.boat.name, n.trip.rumbo ?? undefined, `${n.trip.passengerCount} pax`, n.trip.createdBy.firstName ?? "Guest"].filter(Boolean);
         return parts.join(" • ");
     }
     return "";
