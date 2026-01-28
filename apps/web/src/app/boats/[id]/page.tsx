@@ -79,39 +79,6 @@ export default async function BoatPage({ params }: { params: Promise<{ id: strin
                 {b.captain.displayName} • {formatRating(b.captain.rating.avg, b.captain.rating.count)} • {b.maxPassengers} pax • min {b.minimumHours}h
             </div>
 
-            <div className={styles.captainCard}>
-                <h2 className={styles.h2}>About {b.captain.displayName}</h2>
-                {b.captain.bio ? <p className={styles.bio}>{b.captain.bio}</p> : null}
-                {b.captain.phone ? (
-                    <div className={styles.meta}>
-                        <strong>Phone:</strong> {b.captain.phone}
-                    </div>
-                ) : null}
-                <div className={styles.meta}>
-                    <strong>Rating:</strong> {formatRating(b.captain.rating.avg, b.captain.rating.count)}
-                </div>
-
-                {b.captain.reviews && b.captain.reviews.length > 0 ? (
-                    <div className={styles.reviewsSection}>
-                        <h3 className={styles.h3}>Recent reviews</h3>
-                        <ul className={styles.reviewsList}>
-                            {b.captain.reviews.map((r) => (
-                                <li key={r.id} className={styles.reviewItem}>
-                                    <div className={styles.reviewHeader}>
-                                        <span className={styles.reviewRating}>{r.rating}/5 ★</span>
-                                        <span className={styles.reviewAuthor}>{r.authorFirstName ?? "Anonymous"}</span>
-                                        <span className={styles.reviewBoat}>{r.boatName}</span>
-                                    </div>
-                                    {r.comment ? <div className={styles.reviewComment}>{r.comment}</div> : null}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                ) : (
-                    <div className={styles.dim}>No reviews yet.</div>
-                )}
-            </div>
-
             {b.photos?.length ? (
                 <div className={styles.galleryWrap}>
                     <div className={styles.gallery} aria-label="Boat photos">
@@ -169,6 +136,38 @@ export default async function BoatPage({ params }: { params: Promise<{ id: strin
                         See full destination guide →
                     </a>
                 </div>
+            </div>
+            <div className={styles.captainCard}>
+                <h2 className={styles.h2}>About {b.captain.displayName}</h2>
+                {b.captain.bio ? <p className={styles.bio}>{b.captain.bio}</p> : null}
+                {b.captain.phone ? (
+                    <div className={styles.meta}>
+                        <strong>Phone:</strong> {b.captain.phone}
+                    </div>
+                ) : null}
+                <div className={styles.meta}>
+                    <strong>Rating:</strong> {formatRating(b.captain.rating.avg, b.captain.rating.count)}
+                </div>
+
+                {b.captain.reviews && b.captain.reviews.length > 0 ? (
+                    <div className={styles.reviewsSection}>
+                        <h3 className={styles.h3}>Recent reviews</h3>
+                        <ul className={styles.reviewsList}>
+                            {b.captain.reviews.map((r) => (
+                                <li key={r.id} className={styles.reviewItem}>
+                                    <div className={styles.reviewHeader}>
+                                        <span className={styles.reviewRating}>{r.rating}/5 ★</span>
+                                        <span className={styles.reviewAuthor}>{r.authorFirstName ?? "Anonymous"}</span>
+                                        <span className={styles.reviewBoat}>{r.boatName}</span>
+                                    </div>
+                                    {r.comment ? <div className={styles.reviewComment}>{r.comment}</div> : null}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                ) : (
+                    <div className={styles.dim}>No reviews yet.</div>
+                )}
             </div>
         </div>
     );
